@@ -1,0 +1,30 @@
+{
+  "_comment": "Template only. Download the real file from the DEV Firebase project's Project Settings > General > Your apps, and save it as app/src/dev/google-services.json (gitignored, never commit the real file).",
+  "project_info": {
+    "project_number": "REPLACE_WITH_DEV_PROJECT_NUMBER",
+    "project_id": "REPLACE_WITH_DEV_FIREBASE_PROJECT_ID",
+    "storage_bucket": "REPLACE_WITH_DEV_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_WITH_DEV_MOBILESDK_APP_ID",
+        "android_client_info": {
+          "package_name": "com.codigitech.belay.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_DEV_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

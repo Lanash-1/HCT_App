@@ -48,4 +48,12 @@ Don't write implementation code speculatively "ahead of" a test. Streak and grac
 
 ## Commands
 
-No build yet — this repo currently contains design assets and docs only. Once the Android project is scaffolded, record the actual build/test/lint commands here (e.g. `./gradlew test`, `./gradlew lint`) so future sessions don't have to rediscover them.
+Two product flavors (`dev`/`prod`, see [docs/TECH_STACK.md §Environments](docs/TECH_STACK.md#environments)) × two build types (`debug`/`release`). Use the `dev` flavor for local work.
+
+- Build: `./gradlew :app:assembleDevDebug`
+- Unit tests: `./gradlew testDevDebugUnitTest`
+- Lint: `./gradlew lintDevDebug`
+- Instrumented tests (needs a connected device/emulator): `./gradlew connectedDevDebugAndroidTest`
+- CI (`.github/workflows/android-ci.yml`) runs lint + unit tests on every push/PR to `main`/`development`.
+
+Firebase (Crashlytics/FCM) is wired into the build but only activates once a real `google-services.json` is dropped in per environment (`app/src/dev/`, `app/src/prod/` — see the `.example` templates and [docs/TECH_STACK.md §9b](docs/TECH_STACK.md#9b-secrets--environment-config)); until then the plugin is skipped so the build still works.
