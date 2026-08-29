@@ -1,5 +1,10 @@
 package com.codigitech.belay.ui.createchallenge
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,10 +34,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codigitech.belay.ui.common.BelayTimePickerDialog
@@ -47,6 +55,8 @@ fun CreateChallengeRoute(
   LaunchedEffect(uiState.didCreate) {
     if (uiState.didCreate) onDone()
   }
+
+  NotificationPermissionPrompt(triggerKey = uiState.selectedWitnessId)
 
   CreateChallengeScreen(
     uiState = uiState,
@@ -158,6 +168,47 @@ fun CreateChallengeScreen(
     Button(onClick = onSubmit, enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
       Text(CreateChallengeCopy.SAVE)
     }
+  }
+}
+
+/**
+ * Prompts for POST_NOTIFICATIONS (Android 13+) right after [triggerKey] first becomes non-null —
+ * i.e. once the user has picked a witness and can see why reminders/cheers need it (PRD §6.5),
+ * rather than firing blind on first launch. A no-op below API 33 or once already granted.
+ */
+@Composable
+private fun NotificationPermissionPrompt(triggerKey: String?) {
+  var showRationale by remember { mutableStateOf(false) }
+  val context = LocalContext.current
+  val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
+  LaunchedEffect(triggerKey) {
+    if (
+      triggerKey != null &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+    ) {
+      showRationale = true
+    }
+  }
+
+  if (showRationale) {
+    AlertDialog(
+      onDismissRequest = { showRationale = false },
+      title = { Text(CreateChallengeCopy.NOTIFICATION_RATIONALE_TITLE) },
+      text = { Text(CreateChallengeCopy.NOTIFICATION_RATIONALE_BODY) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showRationale = false
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+          }
+        ) {
+          Text(CreateChallengeCopy.NOTIFICATION_RATIONALE_CONFIRM)
+        }
+      },
+      dismissButton = { TextButton(onClick = { showRationale = false }) { Text(CreateChallengeCopy.NOTIFICATION_RATIONALE_DISMISS) } },
+    )
   }
 }
 
