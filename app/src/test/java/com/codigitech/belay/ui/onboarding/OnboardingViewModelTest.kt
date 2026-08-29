@@ -44,6 +44,12 @@ private class FakeUserRepository : UserRepository {
     modeUpdates += userId to mode
   }
 
+  override suspend fun setThemePref(userId: String, pref: String) = error("not used")
+
+  override suspend fun setDailyReminderTime(userId: String, time: String?) = error("not used")
+
+  override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
+
   override suspend fun getProfile(userId: String): UserEntity? = null
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = MutableStateFlow(null)

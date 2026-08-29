@@ -9,8 +9,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object CreateChallenge : NavKey
 
-@Serializable data object Today : NavKey
-
-@Serializable data object Watching : NavKey
+@Serializable data object MainTabs : NavKey
 
 @Serializable data class WitnessDetail(val challengeId: String) : NavKey
