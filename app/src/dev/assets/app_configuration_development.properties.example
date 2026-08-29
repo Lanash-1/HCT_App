@@ -1,0 +1,25 @@
+# Template only. Download the real file from the Catalyst console:
+# Settings > Developer Tools > Android (for the dev project), then save it as
+# app/src/dev/assets/app_configuration_development.properties (gitignored, never commit
+# the real file). See docs/TECH_STACK.md §9b and §Environments.
+clientID=
+clientSecret=
+JWTClientID=NA
+JWTClientSecret=NA
+notificationAppID=
+portalID=
+redirectUrl=
+projectID=
+apiBaseURL=https://api.catalyst.zoho.in
+AccountsPortalDomain=
+oauthScopes=
+requestHeaders=
+printStackTrace=true
+minLogLevel=ALL
+httpRequestMode=ASYNC
+connectTimeOutInSec=20
+readTimeOutInSec=20
+writeTimeOutInSec=20
+zcqlParser=V1
+StratusDomainSuffix=.zohostratus.in
+NimbusDomainSuffix=.nimbuspop.com
