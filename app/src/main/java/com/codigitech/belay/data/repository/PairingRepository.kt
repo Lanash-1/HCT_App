@@ -4,6 +4,7 @@ import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.core.IdGenerator
 import com.codigitech.belay.data.local.dao.PairingDao
 import com.codigitech.belay.data.local.entity.PairingEntity
+import com.codigitech.belay.data.remote.PairingRemoteDataSource
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
 import javax.inject.Inject
 
@@ -23,6 +24,7 @@ class PairingRepositoryImpl
 @Inject
 constructor(
   private val pairingDao: PairingDao,
+  private val remoteDataSource: PairingRemoteDataSource,
   private val codeGenerator: PairCodeGenerator,
   private val clock: BelayClock,
   private val idGenerator: IdGenerator,
@@ -38,13 +40,17 @@ constructor(
         status = "pending",
         createdAt = clock.nowEpochMillis(),
       )
+    remoteDataSource.upsert(pairing)
     pairingDao.upsert(pairing)
     return pairing
   }
 
   override suspend fun completePairing(pairCode: String, toUserId: String): PairingResult {
-    val pending = pairingDao.findPendingByCode(pairCode) ?: return PairingResult.NotFound
+    // The pairing was created on the other person's device, so it must be resolved remotely —
+    // local Room only ever has pairings this device itself created or already completed.
+    val pending = remoteDataSource.findPendingByCode(pairCode) ?: return PairingResult.NotFound
     val paired = pending.copy(toUserId = toUserId, status = "paired")
+    remoteDataSource.upsert(paired)
     pairingDao.upsert(paired)
     return PairingResult.Success(paired)
   }

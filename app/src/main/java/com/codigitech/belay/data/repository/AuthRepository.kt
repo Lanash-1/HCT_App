@@ -22,6 +22,8 @@ interface AuthRepository {
 
   fun currentUserId(): String?
 
+  fun currentUserEmail(): String?
+
   fun logOut()
 }
 
@@ -50,6 +52,8 @@ constructor(private val firebaseAuth: FirebaseAuth) : AuthRepository {
   }
 
   override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
+
+  override fun currentUserEmail(): String? = firebaseAuth.currentUser?.email
 
   override fun logOut() {
     firebaseAuth.signOut()

@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.codigitech.belay.ui.auth.AuthRoute
+import com.codigitech.belay.ui.onboarding.OnboardingRoute
 import com.codigitech.belay.ui.today.TodayScreen
 
 @Composable
@@ -23,6 +24,15 @@ fun MainNavigation() {
         entry<Auth> {
           AuthRoute(
             onAuthenticated = {
+              backStack.clear()
+              backStack.add(Onboarding)
+            },
+            modifier = Modifier.safeDrawingPadding().padding(16.dp),
+          )
+        }
+        entry<Onboarding> {
+          OnboardingRoute(
+            onContinue = {
               backStack.clear()
               backStack.add(Today)
             },
