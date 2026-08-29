@@ -1,10 +1,3 @@
 <resources>
     <string name="app_name">Belay</string>
-    <!--
-      Catalyst embedded-auth redirect scheme, read from the dev config's redirectUrl
-      (currently "google.com" in the Catalyst console — looks like an unset placeholder,
-      see docs/TECH_STACK.md open questions; revisit in the Catalyst console's
-      Developer Tools > Android settings once real login is wired up).
-    -->
-    <string name="url_scheme" translatable="false">google.com</string>
 </resources>

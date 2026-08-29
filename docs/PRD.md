@@ -58,7 +58,7 @@ The design's own "Next steps" note names dark theme as done and flags photo-proo
 | 6.3 | **Account deletion + data export, in-app** | Google Play policy requires an in-app path to delete account and associated data for any app with account creation. Non-negotiable for public release. |
 | 6.4 | **Privacy policy + Play Data Safety disclosure** | Same reason — required for listing, and this app handles another person's behavioral data (the witness relationship), which needs explicit disclosure. |
 | 6.5 | **Notification permission flow (Android 13+)** | Runtime `POST_NOTIFICATIONS` prompt, timed appropriately (after the user sees why — e.g. right after picking a witness), not fired blind on first launch. |
-| 6.6 | **Offline-tolerant check-ins** | Habits get checked off in the morning; assume flaky connectivity. Check-ins queue locally (Room) and sync to Catalyst when back online, rather than failing silently. |
+| 6.6 | **Offline-tolerant check-ins** | Habits get checked off in the morning; assume flaky connectivity. Check-ins queue locally (Room) and sync to Firestore when back online, rather than failing silently. |
 | 6.7 | **Empty / edge states** — no witness yet, witness hasn't opened app in N days, all grace used, challenge ended | Design's interactive prototype only shows the "happy path" state per screen; production needs these explicitly designed, not improvised at build time. |
 | 6.8 | **Basic crash/error reporting** | Needed pre-launch to catch issues in a public release; not user-facing but a build requirement. |
 | 6.9 | *(Deferred, not v1)* Photo-proof check-ins | Explicitly named "remaining follow-on" in the design; kept out of v1 to avoid scope creep on the launch build. Tracked in [ROADMAP.md](ROADMAP.md). |
@@ -98,6 +98,6 @@ Everything needed to start development is decided. These remain open but are del
 - Package ID confirmed as `com.codigitech.belay` ([TECH_STACK.md §9](TECH_STACK.md#9-naming--identifiers)); Play Console app entry itself not yet created — do that when ready to publish.
 - Domain for Android App Links verification, needed for deep-link pairing ([TECH_STACK.md §11](TECH_STACK.md#11-pairing)).
 - Whether cheer/nudge gets optional quick-pick message shortcuts alongside free text, or free text only ([TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages)).
-- Prod Catalyst project creation — dev project exists; prod is created before first release build ([TECH_STACK.md §Environments](TECH_STACK.md#environments)).
+- Prod Firebase project creation — dev project exists; prod is created before first release build ([TECH_STACK.md §Environments](TECH_STACK.md#environments)).
 - Real logo/icon assets — using a text-monogram placeholder for now ([TECH_STACK.md §9a](TECH_STACK.md#9a-app-icon)).
 - [PRIVACY_POLICY.md](PRIVACY_POLICY.md) is drafted but needs the bracketed placeholders filled in, a legal review, and hosting before Play Store submission.

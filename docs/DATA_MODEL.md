@@ -1,15 +1,17 @@
-# Belay — Data Model (Zoho Catalyst Data Store)
+# Belay — Data Model (Firestore)
 
-**Status:** Draft — refine once Catalyst project is created and TDD on Repositories surfaces gaps.
+**Status:** Draft — refine as TDD on Repositories surfaces gaps.
 
-This is a NoSQL schema for Catalyst Data Store. Tables below are a starting shape, not final column types — expect them to shift slightly as streak/grace-day logic gets written test-first (see [TECH_STACK.md §7](TECH_STACK.md#7-testing--test-driven-development)).
+This is a Firestore schema — each "table" below is a top-level collection, flat (not nested subcollections), with reference-id fields (e.g. `habits.challenge_id`) linking them, and Firestore's auto-generated document ID standing in for each `*_id` primary key. Not final column/field types — expect them to shift slightly as streak/grace-day logic gets written test-first (see [TECH_STACK.md §7](TECH_STACK.md#7-testing--test-driven-development)).
 
-## Tables
+(Originally written against Zoho Catalyst Data Store, hence the still-relational shape — the backend moved to Firebase/Firestore during implementation, see [TECH_STACK.md §3](TECH_STACK.md#3-backend-firebase). The shape didn't need to change, just the terminology.)
+
+## Collections
 
 ### `users`
 | Field | Type | Notes |
 |---|---|---|
-| `user_id` | string (Catalyst Auth UID) | primary identifier |
+| `user_id` | string (Firebase Auth UID) | primary identifier — see [TECH_STACK.md §10](TECH_STACK.md#10-auth) for why auth moved off Catalyst |
 | `display_name` | string | |
 | `pair_code` | string | short code shown in onboarding (e.g. `7K42`) |
 | `default_mode` | enum(`challenger`,`witness`) | last-used mode, restored on app open |
@@ -28,7 +30,7 @@ This is a NoSQL schema for Catalyst Data Store. Tables below are a starting shap
 | `duration_days` | int | one of 7 / 21 / 30 / 66 |
 | `grace_days_total` | int | set at creation, 0–3 per design |
 | `grace_days_used` | int | |
-| `perfect_days` | int | running total for the whole challenge (PRD §4.3 "perfect days belong to the challenge"); written only by the `dayRollover` Catalyst Function — added once implementation (the day-rollover Function) surfaced that the original draft had nowhere to store this |
+| `perfect_days` | int | running total for the whole challenge (PRD §4.3 "perfect days belong to the challenge"); written only by the `dayRollover` Cloud Function — added once implementation (the day-rollover Function) surfaced that the original draft had nowhere to store this |
 | `start_date` | date | |
 | `status` | enum(`active`,`completed`,`abandoned`) | |
 
@@ -42,7 +44,7 @@ This is a NoSQL schema for Catalyst Data Store. Tables below are a starting shap
 | `icon` | string | short glyph/initial per design |
 | `reminder_time` | string (HH:mm), nullable | per-habit reminder — PRD §6.1 |
 | `sort_order` | int | max 5 habits per challenge, enforced at write time |
-| `current_streak` | int | denormalized for fast read; recalculated by Catalyst Function on each check-in |
+| `current_streak` | int | denormalized for fast read; recalculated by Cloud Function on each check-in |
 
 ### `check_ins`
 | Field | Type | Notes |
@@ -78,10 +80,10 @@ Cheer/nudge events — also doubles as the "Log" list shown on the witness detai
 | `message` | string | witness-typed free text (max ~140 chars), not preset/tone-resolved copy — see [TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages) |
 | `created_at` | datetime | |
 
-Nudge is rate-limited to 1/day per challenge — enforced in the Catalyst Function that writes this table, not just client-side.
+Nudge is rate-limited to 1/day per challenge — enforced in the `cheerNudge` Cloud Function (a callable function, using `context.auth` for identity) that writes this collection, not just client-side.
 
 ### `recaps`
-Generated weekly by a Catalyst Cron job (Sunday), matching the shareable recap screen.
+Generated weekly by a scheduled Cloud Function (Sunday), matching the shareable recap screen.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -109,5 +111,5 @@ users 1──* pairings (initiated)
 
 ## Notes for implementation
 
-- `current_streak` on `habits` and any other denormalized/derived fields (perfect-day counts, grace remaining) are **written only by Catalyst Functions**, never computed client-side and pushed up — this keeps the scoring logic single-sourced, per [TECH_STACK.md §3](TECH_STACK.md#3-backend-zoho-catalyst).
+- `current_streak` on `habits` and any other denormalized/derived fields (perfect-day counts, grace remaining) are **written only by Cloud Functions**, never computed client-side and pushed up — this keeps the scoring logic single-sourced, per [TECH_STACK.md §3](TECH_STACK.md#3-backend-firebase). Firestore Security Rules enforce this isn't client-writable, not just convention.
 - Local Room schema mirrors this shape for the subset relevant to the signed-in user (their own challenge's habits/check-ins, plus each witnessed challenger's read-only view).

@@ -38,11 +38,9 @@ android {
         create("dev") {
             dimension = "env"
             versionNameSuffix = "-dev"
-            buildConfigField("String", "CATALYST_ENV", "\"DEVELOPMENT\"")
         }
         create("prod") {
             dimension = "env"
-            buildConfigField("String", "CATALYST_ENV", "\"PRODUCTION\"")
         }
     }
 
@@ -59,7 +57,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = true
+      buildConfig = false
       shaders = false
     }
 
@@ -122,12 +120,13 @@ dependencies {
   ksp(libs.hilt.android.compiler)
   implementation(libs.androidx.hilt.navigation.compose)
 
-  // Crash reporting
+  // Firebase: crash reporting, auth, backend (Data Store -> Firestore, Functions -> callable)
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.crashlytics)
-
-  // Backend (Zoho Catalyst)
-  implementation(libs.catalyst.android.sdk)
+  implementation(libs.firebase.auth)
+  implementation(libs.firebase.firestore)
+  implementation(libs.firebase.functions)
+  implementation(libs.kotlinx.coroutines.play.services)
 
   // Local persistence (offline cache + sync queue, see docs/TECH_STACK.md §5)
   implementation(libs.androidx.room.runtime)

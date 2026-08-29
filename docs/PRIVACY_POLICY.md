@@ -12,12 +12,12 @@ This policy describes how Belay ("the app," "we," "our") handles information for
 
 | Data | Why | Where it lives |
 |---|---|---|
-| Email address and password (hashed) | Account creation and sign-in | Zoho Catalyst Authentication |
-| Display name | Shown to your witness / the people you witness | Zoho Catalyst Data Store |
-| Habit names, details, and daily check-in status | Core app function — this is what you and your witness track | Zoho Catalyst Data Store, cached locally on your device |
-| Pairing code / pairing relationships | Connects a challenger with their witness | Zoho Catalyst Data Store |
-| Cheer/nudge messages you send | Delivered to the person you're witnessing | Zoho Catalyst Data Store |
-| Device push token (FCM) | Delivers notifications (sync updates, reminders, cheer/nudge) | Firebase Cloud Messaging, referenced from Catalyst |
+| Email address and password (hashed) | Account creation and sign-in | Firebase Authentication |
+| Display name | Shown to your witness / the people you witness | Firebase Firestore |
+| Habit names, details, and daily check-in status | Core app function — this is what you and your witness track | Firebase Firestore, cached locally on your device |
+| Pairing code / pairing relationships | Connects a challenger with their witness | Firebase Firestore |
+| Cheer/nudge messages you send | Delivered to the person you're witnessing | Firebase Firestore |
+| Device push token (FCM) | Delivers notifications (sync updates, reminders, cheer/nudge) | Firebase Cloud Messaging |
 | Crash and error diagnostics | Fixing bugs | Firebase Crashlytics |
 
 We do not collect location data, contacts, photos (v1 has no photo-proof feature — see [ROADMAP.md](ROADMAP.md)), or browsing history.
@@ -31,8 +31,8 @@ We do not collect location data, contacts, photos (v1 has no photo-proof feature
 ## Third-party services
 
 Belay is built on:
-- **Zoho Catalyst** — backend hosting, authentication, and data storage.
-- **Firebase Cloud Messaging** — push notification delivery (used by Catalyst for this purpose).
+- **Firebase** (Authentication, Firestore, Cloud Functions) — sign-in, data storage, and server-side business logic.
+- **Firebase Cloud Messaging** — push notification delivery.
 - **Firebase Crashlytics** — crash and error diagnostics.
 
 Each of these processes data on our behalf under their own respective privacy/data-processing terms; we don't share your Belay data with them for any purpose beyond providing the app's functionality.
@@ -50,7 +50,7 @@ Belay is not directed at children under 13 [confirm/adjust age threshold per you
 
 ## Security
 
-Data in transit is encrypted (HTTPS/TLS). Passwords are hashed by Zoho Catalyst Authentication, never stored or visible to us in plain text.
+Data in transit is encrypted (HTTPS/TLS). Passwords are hashed by Firebase Authentication, never stored or visible to us in plain text.
 
 ## Changes to this policy
 
