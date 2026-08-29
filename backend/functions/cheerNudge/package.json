@@ -1,0 +1,12 @@
+{
+	"name": "cheernudge",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "lanash.d@zohomail.in",
+	"dependencies": {
+		"zcatalyst-sdk-node": "latest"
+	},
+	"devDependencies": {
+		"jest": "^30.5.0"
+	}
+}

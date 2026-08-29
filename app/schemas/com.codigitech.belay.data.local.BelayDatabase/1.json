@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4cb3d038818b684340561cb1bb506404",
+    "identityHash": "cdfdc32ec5d8d9a136871e82b71c8a03",
     "entities": [
       {
         "tableName": "users",
@@ -65,7 +65,7 @@
       },
       {
         "tableName": "challenges",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`challengeId` TEXT NOT NULL, `challengerUserId` TEXT NOT NULL, `witnessUserId` TEXT NOT NULL, `title` TEXT NOT NULL, `durationDays` INTEGER NOT NULL, `graceDaysTotal` INTEGER NOT NULL, `graceDaysUsed` INTEGER NOT NULL, `startDate` INTEGER NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`challengeId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`challengeId` TEXT NOT NULL, `challengerUserId` TEXT NOT NULL, `witnessUserId` TEXT NOT NULL, `title` TEXT NOT NULL, `durationDays` INTEGER NOT NULL, `graceDaysTotal` INTEGER NOT NULL, `graceDaysUsed` INTEGER NOT NULL, `perfectDays` INTEGER NOT NULL, `startDate` INTEGER NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`challengeId`))",
         "fields": [
           {
             "fieldPath": "challengeId",
@@ -106,6 +106,12 @@
           {
             "fieldPath": "graceDaysUsed",
             "columnName": "graceDaysUsed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "perfectDays",
+            "columnName": "perfectDays",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -555,7 +561,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4cb3d038818b684340561cb1bb506404')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cdfdc32ec5d8d9a136871e82b71c8a03')"
     ]
   }
 }
