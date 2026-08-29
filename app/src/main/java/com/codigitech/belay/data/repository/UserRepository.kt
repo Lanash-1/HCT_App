@@ -14,6 +14,9 @@ interface UserRepository {
 
   suspend fun setDefaultMode(userId: String, mode: String)
 
+  /** Looks up any user's profile (e.g. a paired contact's display name) — does not create one if missing. */
+  suspend fun getProfile(userId: String): UserEntity?
+
   fun observeLocalUser(userId: String): Flow<UserEntity?>
 }
 
@@ -56,6 +59,9 @@ constructor(
     runCatching { remoteDataSource.upsert(updated) }
     userDao.upsert(updated)
   }
+
+  override suspend fun getProfile(userId: String): UserEntity? =
+    runCatching { remoteDataSource.get(userId) }.getOrNull()?.also { userDao.upsert(it) } ?: userDao.get(userId)
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = userDao.observe(userId)
 }

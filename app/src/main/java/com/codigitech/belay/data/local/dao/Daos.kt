@@ -65,6 +65,9 @@ interface PairingDao {
 
   @Query("SELECT * FROM pairings WHERE pairCode = :pairCode AND status = 'pending' LIMIT 1")
   suspend fun findPendingByCode(pairCode: String): PairingEntity?
+
+  @Query("SELECT * FROM pairings WHERE (fromUserId = :userId OR toUserId = :userId) AND status = 'paired'")
+  suspend fun getPairedFor(userId: String): List<PairingEntity>
 }
 
 @Dao

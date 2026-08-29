@@ -6,6 +6,8 @@ import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -46,6 +48,8 @@ class ChallengeRepositoryImpl
 constructor(
   private val challengeDao: ChallengeDao,
   private val habitDao: HabitDao,
+  private val challengeRemoteDataSource: ChallengeRemoteDataSource,
+  private val habitRemoteDataSource: HabitRemoteDataSource,
   private val clock: BelayClock,
   private val idGenerator: IdGenerator,
 ) : ChallengeRepository {
@@ -93,6 +97,11 @@ constructor(
         )
       }
 
+    // Best-effort remote write, same pattern as PairingRepository/UserRepository: a Firestore
+    // hiccup shouldn't block challenge creation, since Room is the source of truth for "my own"
+    // data and the witness's device will pick this up once connectivity returns.
+    runCatching { challengeRemoteDataSource.upsert(challenge) }
+    runCatching { habitRemoteDataSource.upsertAll(habitEntities) }
     challengeDao.upsert(challenge)
     habitDao.upsertAll(habitEntities)
 

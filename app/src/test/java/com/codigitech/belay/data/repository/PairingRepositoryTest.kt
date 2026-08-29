@@ -22,6 +22,9 @@ private class FakePairingDao : PairingDao {
 
   override suspend fun findPendingByCode(pairCode: String): PairingEntity? =
     stored.values.firstOrNull { it.pairCode == pairCode && it.status == "pending" }
+
+  override suspend fun getPairedFor(userId: String): List<PairingEntity> =
+    stored.values.filter { (it.fromUserId == userId || it.toUserId == userId) && it.status == "paired" }
 }
 
 private class FakePairingRemoteDataSource(private val unreachable: Boolean = false) : PairingRemoteDataSource {
@@ -35,6 +38,11 @@ private class FakePairingRemoteDataSource(private val unreachable: Boolean = fal
   override suspend fun findPendingByCode(pairCode: String): PairingEntity? {
     if (unreachable) throw PairingFirestoreUnavailableException()
     return stored.values.firstOrNull { it.pairCode == pairCode && it.status == "pending" }
+  }
+
+  override suspend fun findPairedContacts(userId: String): List<PairingEntity> {
+    if (unreachable) throw PairingFirestoreUnavailableException()
+    return stored.values.filter { (it.fromUserId == userId || it.toUserId == userId) && it.status == "paired" }
   }
 }
 
@@ -125,5 +133,27 @@ class PairingRepositoryTest {
     val result = repository(FakePairingDao(), FakePairingRemoteDataSource(unreachable = true)).completePairing("ZZZZ", "user-2")
 
     assertEquals(PairingResult.NetworkError, result)
+  }
+
+  @Test
+  fun `getPairedContactIds returns the other side's id regardless of who initiated`() = runTest {
+    val remote = FakePairingRemoteDataSource()
+    remote.stored["p1"] = PairingEntity("p1", "AAAA", "user-1", "user-2", "paired", 0L)
+    remote.stored["p2"] = PairingEntity("p2", "BBBB", "user-3", "user-1", "paired", 0L)
+    remote.stored["p3"] = PairingEntity("p3", "CCCC", "user-1", null, "pending", 0L)
+
+    val contacts = repository(FakePairingDao(), remote).getPairedContactIds("user-1")
+
+    assertEquals(setOf("user-2", "user-3"), contacts.toSet())
+  }
+
+  @Test
+  fun `getPairedContactIds falls back to the local cache when Firestore is unreachable`() = runTest {
+    val dao = FakePairingDao()
+    dao.stored["p1"] = PairingEntity("p1", "AAAA", "user-1", "user-2", "paired", 0L)
+
+    val contacts = repository(dao, FakePairingRemoteDataSource(unreachable = true)).getPairedContactIds("user-1")
+
+    assertEquals(listOf("user-2"), contacts)
   }
 }

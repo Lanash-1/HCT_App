@@ -10,8 +10,12 @@ import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.HabitRepositoryImpl
 import com.codigitech.belay.data.repository.InteractionRepository
 import com.codigitech.belay.data.repository.InteractionRepositoryImpl
+import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.FirestoreChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.FirestoreHabitRemoteDataSource
 import com.codigitech.belay.data.remote.FirestorePairingRemoteDataSource
 import com.codigitech.belay.data.remote.FirestoreUserRemoteDataSource
+import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import com.codigitech.belay.data.remote.PairingRemoteDataSource
 import com.codigitech.belay.data.remote.UserRemoteDataSource
 import com.codigitech.belay.data.repository.PairingRepository
@@ -42,9 +46,13 @@ abstract class RepositoryModule {
 
   @Binds abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
 
+  @Binds abstract fun bindChallengeRemoteDataSource(impl: FirestoreChallengeRemoteDataSource): ChallengeRemoteDataSource
+
   @Binds abstract fun bindInteractionRepository(impl: InteractionRepositoryImpl): InteractionRepository
 
   @Binds abstract fun bindHabitRepository(impl: HabitRepositoryImpl): HabitRepository
+
+  @Binds abstract fun bindHabitRemoteDataSource(impl: FirestoreHabitRemoteDataSource): HabitRemoteDataSource
 
   @Binds abstract fun bindRecapRepository(impl: RecapRepositoryImpl): RecapRepository
 

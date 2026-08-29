@@ -6,6 +6,8 @@ import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -49,24 +51,59 @@ private class FakeHabitDao : HabitDao {
     MutableStateFlow(stored.filter { it.challengeId == challengeId }.sortedBy { it.sortOrder })
 }
 
+private class FakeChallengeRemoteDataSource(private val unreachable: Boolean = false) : ChallengeRemoteDataSource {
+  val stored = mutableMapOf<String, ChallengeEntity>()
+
+  override suspend fun upsert(challenge: ChallengeEntity) {
+    if (unreachable) throw ChallengeFirestoreUnavailableException()
+    stored[challenge.challengeId] = challenge
+  }
+}
+
+private class FakeHabitRemoteDataSource(private val unreachable: Boolean = false) : HabitRemoteDataSource {
+  val stored = mutableListOf<HabitEntity>()
+
+  override suspend fun upsertAll(habits: List<HabitEntity>) {
+    if (unreachable) throw ChallengeFirestoreUnavailableException()
+    stored += habits
+  }
+}
+
+/** Stands in for `FirebaseFirestoreException: Failed to get document because the client is offline.` */
+private class ChallengeFirestoreUnavailableException : Exception()
+
 class ChallengeRepositoryTest {
 
   private val fixedClock = BelayClock { 86_400_000L } // epoch day 1, midnight UTC
   private var nextId = 0
   private val sequentialIds = IdGenerator { "id-${nextId++}" }
 
-  private fun repository(challengeDao: ChallengeDao = FakeChallengeDao(), habitDao: HabitDao = FakeHabitDao()) =
-    ChallengeRepositoryImpl(challengeDao = challengeDao, habitDao = habitDao, clock = fixedClock, idGenerator = sequentialIds)
+  private fun repository(
+    challengeDao: ChallengeDao = FakeChallengeDao(),
+    habitDao: HabitDao = FakeHabitDao(),
+    challengeRemote: ChallengeRemoteDataSource = FakeChallengeRemoteDataSource(),
+    habitRemote: HabitRemoteDataSource = FakeHabitRemoteDataSource(),
+  ) =
+    ChallengeRepositoryImpl(
+      challengeDao = challengeDao,
+      habitDao = habitDao,
+      challengeRemoteDataSource = challengeRemote,
+      habitRemoteDataSource = habitRemote,
+      clock = fixedClock,
+      idGenerator = sequentialIds,
+    )
 
   private val validHabits = listOf(HabitSpec(name = "Run 3km", detail = "before 8am"), HabitSpec(name = "Read", detail = null))
 
   @Test
-  fun `creating a challenge with valid input persists the challenge and its habits`() = runTest {
+  fun `creating a challenge with valid input persists the challenge and its habits, remotely and locally`() = runTest {
     val challengeDao = FakeChallengeDao()
     val habitDao = FakeHabitDao()
+    val challengeRemote = FakeChallengeRemoteDataSource()
+    val habitRemote = FakeHabitRemoteDataSource()
 
     val result =
-      repository(challengeDao, habitDao)
+      repository(challengeDao, habitDao, challengeRemote, habitRemote)
         .createChallenge(
           challengerUserId = "user-1",
           witnessUserId = "user-2",
@@ -83,6 +120,35 @@ class ChallengeRepositoryTest {
     assertEquals(2, success.habits.size)
     assertEquals(listOf(0, 1), success.habits.map { it.sortOrder })
     assertTrue(success.habits.all { it.challengeId == success.challenge.challengeId })
+    assertEquals(success.challenge, challengeDao.stored[success.challenge.challengeId])
+    assertEquals(success.habits, habitDao.stored)
+    assertEquals(success.challenge, challengeRemote.stored[success.challenge.challengeId])
+    assertEquals(success.habits, habitRemote.stored)
+  }
+
+  @Test
+  fun `creating a challenge still succeeds locally even if the remote writes fail`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val habitDao = FakeHabitDao()
+
+    val result =
+      repository(
+          challengeDao,
+          habitDao,
+          challengeRemote = FakeChallengeRemoteDataSource(unreachable = true),
+          habitRemote = FakeHabitRemoteDataSource(unreachable = true),
+        )
+        .createChallenge(
+          challengerUserId = "user-1",
+          witnessUserId = "user-2",
+          title = "Morning reset",
+          habits = validHabits,
+          durationDays = 21,
+          graceDaysTotal = 2,
+        )
+
+    assertTrue(result is ChallengeCreationResult.Success)
+    val success = result as ChallengeCreationResult.Success
     assertEquals(success.challenge, challengeDao.stored[success.challenge.challengeId])
     assertEquals(success.habits, habitDao.stored)
   }

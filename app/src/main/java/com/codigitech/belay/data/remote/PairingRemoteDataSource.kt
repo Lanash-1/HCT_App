@@ -14,6 +14,9 @@ interface PairingRemoteDataSource {
   suspend fun upsert(pairing: PairingEntity)
 
   suspend fun findPendingByCode(pairCode: String): PairingEntity?
+
+  /** Completed pairings involving this user, either side — used to populate a witness picker. */
+  suspend fun findPairedContacts(userId: String): List<PairingEntity>
 }
 
 private const val COLLECTION = "pairings"
@@ -36,6 +39,13 @@ constructor(private val firestore: FirebaseFirestore) : PairingRemoteDataSource 
         .get()
         .await()
     return snapshot.documents.firstOrNull()?.toPairingEntity()
+  }
+
+  override suspend fun findPairedContacts(userId: String): List<PairingEntity> {
+    val asFrom =
+      firestore.collection(COLLECTION).whereEqualTo("from_user_id", userId).whereEqualTo("status", "paired").get().await()
+    val asTo = firestore.collection(COLLECTION).whereEqualTo("to_user_id", userId).whereEqualTo("status", "paired").get().await()
+    return (asFrom.documents + asTo.documents).mapNotNull { it.toPairingEntity() }
   }
 }
 

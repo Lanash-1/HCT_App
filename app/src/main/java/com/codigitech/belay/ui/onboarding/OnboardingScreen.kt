@@ -31,11 +31,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun OnboardingRoute(onContinue: () -> Unit, modifier: Modifier = Modifier, viewModel: OnboardingViewModel = hiltViewModel()) {
+fun OnboardingRoute(
+  onContinue: (OnboardingRole) -> Unit,
+  modifier: Modifier = Modifier,
+  viewModel: OnboardingViewModel = hiltViewModel(),
+) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
   LaunchedEffect(uiState.didContinue) {
-    if (uiState.didContinue) onContinue()
+    if (uiState.didContinue) uiState.role?.let(onContinue)
   }
 
   OnboardingScreen(

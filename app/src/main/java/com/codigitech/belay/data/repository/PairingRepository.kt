@@ -21,6 +21,9 @@ interface PairingRepository {
   suspend fun createPendingPairing(fromUserId: String): PairingEntity
 
   suspend fun completePairing(pairCode: String, toUserId: String): PairingResult
+
+  /** The other side's user id for each completed pairing involving [userId] — e.g. to populate a witness picker. */
+  suspend fun getPairedContactIds(userId: String): List<String>
 }
 
 class PairingRepositoryImpl
@@ -64,5 +67,11 @@ constructor(
     runCatching { remoteDataSource.upsert(paired) }
     pairingDao.upsert(paired)
     return PairingResult.Success(paired)
+  }
+
+  override suspend fun getPairedContactIds(userId: String): List<String> {
+    val pairings =
+      runCatching { remoteDataSource.findPairedContacts(userId) }.getOrNull() ?: pairingDao.getPairedFor(userId)
+    return pairings.map { if (it.fromUserId == userId) it.toUserId else it.fromUserId }.filterNotNull().distinct()
   }
 }

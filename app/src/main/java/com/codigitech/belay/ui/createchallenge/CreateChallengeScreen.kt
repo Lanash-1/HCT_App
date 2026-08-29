@@ -1,0 +1,211 @@
+package com.codigitech.belay.ui.createchallenge
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+@Composable
+fun CreateChallengeRoute(
+  onDone: () -> Unit,
+  modifier: Modifier = Modifier,
+  viewModel: CreateChallengeViewModel = hiltViewModel(),
+) {
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+  LaunchedEffect(uiState.didCreate) {
+    if (uiState.didCreate) onDone()
+  }
+
+  CreateChallengeScreen(
+    uiState = uiState,
+    onTitleChange = viewModel::onTitleChange,
+    onHabitNameChange = viewModel::onHabitNameChange,
+    onHabitDetailChange = viewModel::onHabitDetailChange,
+    onAddHabit = viewModel::addHabit,
+    onRemoveHabit = viewModel::removeHabit,
+    onSelectDuration = viewModel::selectDuration,
+    onSelectWitness = viewModel::selectWitness,
+    onIncrementGrace = viewModel::incrementGraceDays,
+    onDecrementGrace = viewModel::decrementGraceDays,
+    onSubmit = viewModel::submit,
+    modifier = modifier,
+  )
+}
+
+@Composable
+fun CreateChallengeScreen(
+  uiState: CreateChallengeUiState,
+  onTitleChange: (String) -> Unit,
+  onHabitNameChange: (Int, String) -> Unit,
+  onHabitDetailChange: (Int, String) -> Unit,
+  onAddHabit: () -> Unit,
+  onRemoveHabit: (Int) -> Unit,
+  onSelectDuration: (Int) -> Unit,
+  onSelectWitness: (String) -> Unit,
+  onIncrementGrace: () -> Unit,
+  onDecrementGrace: () -> Unit,
+  onSubmit: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(28.dp)) {
+      OutlinedTextField(
+        value = uiState.title,
+        onValueChange = onTitleChange,
+        label = { Text(CreateChallengeCopy.TITLE_LABEL) },
+        placeholder = { Text(CreateChallengeCopy.TITLE_HINT) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+      )
+
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionHeader(CreateChallengeCopy.HABITS_SECTION, CreateChallengeCopy.habitCount(uiState.habits.size))
+        uiState.habits.forEachIndexed { index, habit ->
+          HabitRow(
+            habit = habit,
+            showRemove = uiState.habits.size > 1,
+            onNameChange = { onHabitNameChange(index, it) },
+            onDetailChange = { onHabitDetailChange(index, it) },
+            onRemove = { onRemoveHabit(index) },
+          )
+        }
+        if (uiState.habits.size < CreateChallengeViewModel.MAX_HABITS) {
+          TextButton(onClick = onAddHabit) { Text(CreateChallengeCopy.ADD_HABIT) }
+        }
+        Text(CreateChallengeCopy.HABITS_HELPER, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionHeader(CreateChallengeCopy.DURATION_SECTION)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          CreateChallengeViewModel.DURATIONS_DAYS.forEach { days ->
+            FilterChip(
+              selected = uiState.selectedDurationDays == days,
+              onClick = { onSelectDuration(days) },
+              label = { Text(CreateChallengeCopy.durationLabel(days)) },
+            )
+          }
+        }
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionHeader(CreateChallengeCopy.WITNESS_SECTION)
+        if (uiState.witnessOptions.isEmpty()) {
+          Text(CreateChallengeCopy.WITNESS_EMPTY, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        uiState.witnessOptions.forEach { option ->
+          WitnessRow(option = option, selected = uiState.selectedWitnessId == option.userId, onClick = { onSelectWitness(option.userId) })
+        }
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionHeader(CreateChallengeCopy.GRACE_SECTION)
+        Row(
+          modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(18.dp)).padding(16.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Column(modifier = Modifier.weight(1f)) {
+            Text(CreateChallengeCopy.GRACE_TITLE, style = MaterialTheme.typography.titleSmall)
+            Text(CreateChallengeCopy.GRACE_DETAIL, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          }
+          Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = onDecrementGrace, modifier = Modifier) { Text("−") }
+            Text(uiState.graceDays.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            OutlinedButton(onClick = onIncrementGrace) { Text("+") }
+          }
+        }
+      }
+
+      uiState.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    }
+
+    Button(onClick = onSubmit, enabled = !uiState.isLoading, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+      Text(CreateChallengeCopy.SAVE)
+    }
+  }
+}
+
+@Composable
+private fun SectionHeader(title: String, trailing: String? = null) {
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Text(
+      text = title.uppercase(),
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    trailing?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+  }
+}
+
+@Composable
+private fun HabitRow(habit: HabitInput, showRemove: Boolean, onNameChange: (String) -> Unit, onDetailChange: (String) -> Unit, onRemove: () -> Unit) {
+  Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Top) {
+      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        OutlinedTextField(
+          value = habit.name,
+          onValueChange = onNameChange,
+          placeholder = { Text(CreateChallengeCopy.HABIT_NAME_HINT) },
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+          value = habit.detail,
+          onValueChange = onDetailChange,
+          placeholder = { Text(CreateChallengeCopy.HABIT_DETAIL_HINT) },
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
+      if (showRemove) {
+        IconButton(onClick = onRemove, modifier = Modifier.semantics { contentDescription = "Remove habit" }) {
+          Text("×", style = MaterialTheme.typography.titleLarge)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun WitnessRow(option: WitnessOption, selected: Boolean, onClick: () -> Unit) {
+  Card(
+    onClick = onClick,
+    colors =
+      CardDefaults.cardColors(
+        containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+      ),
+  ) {
+    Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+      Text(option.displayName, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+    }
+  }
+}
