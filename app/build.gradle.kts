@@ -134,4 +134,7 @@ dependencies {
   implementation(libs.androidx.room.ktx)
   ksp(libs.androidx.room.compiler)
   testImplementation(libs.androidx.room.testing)
+
+  // Offline check-in sync queue (PRD §6.6)
+  implementation(libs.androidx.work.runtime.ktx)
 }

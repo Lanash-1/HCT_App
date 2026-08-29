@@ -67,6 +67,9 @@ interface CheckInDao {
 
   @Query("SELECT * FROM check_ins WHERE habitId = :habitId AND date = :date")
   suspend fun get(habitId: String, date: Long): CheckInEntity?
+
+  /** Rows still owed a Firestore write — what the offline-sync worker retries (PRD §6.6). */
+  @Query("SELECT * FROM check_ins WHERE synced = 0") suspend fun getUnsynced(): List<CheckInEntity>
 }
 
 @Dao
