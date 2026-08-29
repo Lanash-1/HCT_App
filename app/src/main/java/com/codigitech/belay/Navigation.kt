@@ -13,6 +13,8 @@ import com.codigitech.belay.ui.createchallenge.CreateChallengeRoute
 import com.codigitech.belay.ui.onboarding.OnboardingRole
 import com.codigitech.belay.ui.onboarding.OnboardingRoute
 import com.codigitech.belay.ui.today.TodayRoute
+import com.codigitech.belay.ui.watching.WatchingRoute
+import com.codigitech.belay.ui.witnessdetail.WitnessDetailRoute
 
 @Composable
 fun MainNavigation() {
@@ -36,7 +38,7 @@ fun MainNavigation() {
           OnboardingRoute(
             onContinue = { role ->
               backStack.clear()
-              backStack.add(if (role == OnboardingRole.Challenger) CreateChallenge else Today)
+              backStack.add(if (role == OnboardingRole.Challenger) CreateChallenge else Watching)
             },
             modifier = Modifier.safeDrawingPadding().padding(16.dp),
           )
@@ -51,6 +53,15 @@ fun MainNavigation() {
           )
         }
         entry<Today> { TodayRoute(modifier = Modifier.safeDrawingPadding().padding(16.dp)) }
+        entry<Watching> {
+          WatchingRoute(
+            onOpenPerson = { challengeId -> backStack.add(WitnessDetail(challengeId)) },
+            modifier = Modifier.safeDrawingPadding().padding(16.dp),
+          )
+        }
+        entry<WitnessDetail> { key ->
+          WitnessDetailRoute(challengeId = key.challengeId, modifier = Modifier.safeDrawingPadding().padding(16.dp))
+        }
       },
   )
 }

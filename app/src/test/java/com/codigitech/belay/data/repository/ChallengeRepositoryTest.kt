@@ -294,4 +294,15 @@ class ChallengeRepositoryTest {
     assertTrue(result is ChallengeCreationResult.Success)
     assertEquals("abandoned", challengeDao.stored["challenge-old"]?.status)
   }
+
+  @Test
+  fun `observeChallenge returns the challenge by id regardless of who's asking`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val challenge = ChallengeEntity("challenge-1", "user-1", "user-2", "Morning reset", 21, 1, 0, 0, startDate = 1L, status = "active")
+    challengeDao.upsert(challenge)
+
+    val result = repository(challengeDao).observeChallenge("challenge-1")
+
+    assertEquals(challenge, (result as MutableStateFlow).value)
+  }
 }

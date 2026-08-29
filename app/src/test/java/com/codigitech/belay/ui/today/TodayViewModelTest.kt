@@ -52,6 +52,8 @@ private class FakeChallengeRepositoryForToday(private val challenge: ChallengeEn
   override fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?> = MutableStateFlow(challenge)
 
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = MutableStateFlow(emptyList())
+
+  override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = error("not used")
 }
 
 private class FakeHabitRepositoryForToday(private val habits: List<HabitEntity>) : HabitRepository {
@@ -65,6 +67,8 @@ private class FakeCheckInRepositoryForToday(initial: List<CheckInEntity> = empty
   val setCheckInCalls = mutableListOf<List<Any?>>()
 
   override fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>> = state
+
+  override fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>> = state
 
   override suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean): CheckInEntity {
     setCheckInCalls += listOf(habitId, challengeId, date, done)

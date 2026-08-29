@@ -41,6 +41,9 @@ interface ChallengeRepository {
   fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?>
 
   fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>>
+
+  /** A single challenge by id, regardless of who's asking — used by the witness-detail screen (PRD §5.7). */
+  fun observeChallenge(challengeId: String): Flow<ChallengeEntity?>
 }
 
 class ChallengeRepositoryImpl
@@ -120,6 +123,8 @@ constructor(
   override fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?> = challengeDao.observeActiveForChallenger(userId)
 
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = challengeDao.observeWitnessed(userId)
+
+  override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = challengeDao.observe(challengeId)
 
   companion object {
     const val MAX_HABITS = 5

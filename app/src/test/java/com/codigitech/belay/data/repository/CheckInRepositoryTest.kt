@@ -23,6 +23,9 @@ private class FakeCheckInDao : CheckInDao {
   override fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>> =
     MutableStateFlow(stored.values.filter { it.challengeId == challengeId && it.date == date })
 
+  override fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>> =
+    MutableStateFlow(stored.values.filter { it.challengeId == challengeId }.sortedByDescending { it.date })
+
   override fun observeForHabit(habitId: String): Flow<List<CheckInEntity>> =
     MutableStateFlow(stored.values.filter { it.habitId == habitId })
 
@@ -110,6 +113,19 @@ class CheckInRepositoryTest {
     val results = repo.observeForChallengeAndDate("challenge-1", 5L)
 
     assertEquals(1, (results as MutableStateFlow).value.size)
+  }
+
+  @Test
+  fun `observeForChallenge returns every date for the challenge, most recent first`() = runTest {
+    val checkInDao = FakeCheckInDao()
+    val repo = repository(checkInDao)
+    repo.setCheckIn(habitId = "habit-1", challengeId = "challenge-1", date = 5L, done = true)
+    repo.setCheckIn(habitId = "habit-2", challengeId = "challenge-1", date = 6L, done = true)
+    repo.setCheckIn(habitId = "habit-3", challengeId = "challenge-2", date = 6L, done = true)
+
+    val results = (repo.observeForChallenge("challenge-1") as MutableStateFlow).value
+
+    assertEquals(listOf(6L, 5L), results.map { it.date })
   }
 
   private fun assertFalseDone(done: Boolean) = assertEquals(false, done)
