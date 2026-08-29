@@ -1,0 +1,30 @@
+{
+  "_comment": "Template only. Download the real file from the PROD Firebase project's Project Settings > General > Your apps, and save it as app/src/prod/google-services.json (gitignored, never commit the real file). The prod Firebase/Catalyst projects are created before first release build — see docs/TECH_STACK.md §Environments.",
+  "project_info": {
+    "project_number": "REPLACE_WITH_PROD_PROJECT_NUMBER",
+    "project_id": "REPLACE_WITH_PROD_FIREBASE_PROJECT_ID",
+    "storage_bucket": "REPLACE_WITH_PROD_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_WITH_PROD_MOBILESDK_APP_ID",
+        "android_client_info": {
+          "package_name": "com.codigitech.belay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_PROD_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

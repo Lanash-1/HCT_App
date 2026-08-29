@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!--
+      Blocky "B" monogram placeholder (docs/TECH_STACK.md §9a), built from a union of
+      rectangles to stay unambiguous as a vector path — swap for real logo assets when ready.
+    -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M34,24 L46,24 L46,84 L34,84 Z
+            M34,24 L68,24 L68,36 L34,36 Z
+            M58,24 L70,24 L70,52 L58,52 Z
+            M34,46 L68,46 L68,58 L34,58 Z
+            M58,58 L72,58 L72,84 L58,84 Z
+            M34,72 L72,72 L72,84 L34,84 Z" />
+</vector>
