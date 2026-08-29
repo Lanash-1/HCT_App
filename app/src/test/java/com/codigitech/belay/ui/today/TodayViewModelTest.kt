@@ -54,6 +54,8 @@ private class FakeChallengeRepositoryForToday(private val challenge: ChallengeEn
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = MutableStateFlow(emptyList())
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = error("not used")
+
+  override suspend fun syncRemoteUpdates(challengeId: String) = Unit
 }
 
 private class FakeHabitRepositoryForToday(private val habits: List<HabitEntity>) : HabitRepository {
@@ -281,5 +283,28 @@ class TodayViewModelTest {
     vm.dismissNudge()
 
     assertNull(vm.uiState.value.nudgeMessage)
+  }
+
+  @Test
+  fun `a habit with a fresh streak-broken flag surfaces in the recovery moment until dismissed`() = runTest {
+    val brokenHabits =
+      listOf(
+        HabitEntity("habit-1", "challenge-1", "Run 3km", "before 8am", null, null, 0, currentStreak = 0, streakBrokenAt = "2026-08-29"),
+        HabitEntity("habit-2", "challenge-1", "Read", null, null, null, 1, currentStreak = 2),
+      )
+    val vm = viewModel(habitRepository = FakeHabitRepositoryForToday(brokenHabits))
+
+    assertEquals(listOf("Run 3km"), vm.uiState.value.brokenHabitNames)
+
+    vm.dismissRecovery()
+
+    assertTrue(vm.uiState.value.brokenHabitNames.isEmpty())
+  }
+
+  @Test
+  fun `no habit has a streak-broken flag means no recovery moment`() = runTest {
+    val vm = viewModel()
+
+    assertTrue(vm.uiState.value.brokenHabitNames.isEmpty())
   }
 }

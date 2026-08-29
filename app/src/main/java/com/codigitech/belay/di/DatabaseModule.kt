@@ -23,7 +23,9 @@ object DatabaseModule {
   @Provides
   @Singleton
   fun provideDatabase(@ApplicationContext context: Context): BelayDatabase =
-    Room.databaseBuilder(context, BelayDatabase::class.java, "belay.db").build()
+    // Pre-release, no shipped users yet — destructive migration is fine until the schema needs
+    // to survive a real upgrade; switch to real Migrations before the first Play Store release.
+    Room.databaseBuilder(context, BelayDatabase::class.java, "belay.db").fallbackToDestructiveMigration(true).build()
 
   @Provides fun provideUserDao(db: BelayDatabase): UserDao = db.userDao()
 

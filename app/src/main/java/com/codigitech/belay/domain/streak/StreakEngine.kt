@@ -8,7 +8,8 @@ data class ChallengeGraceState(val graceDaysTotal: Int, val graceDaysUsed: Int)
 
 data class DayRolloverInput(val habits: List<HabitDayResult>, val grace: ChallengeGraceState)
 
-data class HabitStreakUpdate(val habitId: String, val newStreak: Int)
+/** [streakBroken] is true only when grace was exhausted and this habit *had* a nonzero streak that this miss just reset to 0. */
+data class HabitStreakUpdate(val habitId: String, val newStreak: Int, val streakBroken: Boolean)
 
 data class DayRolloverResult(
   val habitUpdates: List<HabitStreakUpdate>,
@@ -26,7 +27,7 @@ fun evaluateDayRollover(input: DayRolloverInput): DayRolloverResult {
 
   if (isPerfectDay) {
     return DayRolloverResult(
-      habitUpdates = input.habits.map { HabitStreakUpdate(it.habitId, it.currentStreak + 1) },
+      habitUpdates = input.habits.map { HabitStreakUpdate(it.habitId, it.currentStreak + 1, streakBroken = false) },
       newGraceDaysUsed = input.grace.graceDaysUsed,
       isPerfectDay = true,
     )
@@ -43,7 +44,8 @@ fun evaluateDayRollover(input: DayRolloverInput): DayRolloverResult {
           graceAvailable -> habit.currentStreak
           else -> 0
         }
-      HabitStreakUpdate(habit.habitId, newStreak)
+      val streakBroken = !habit.checked && !graceAvailable && habit.currentStreak > 0
+      HabitStreakUpdate(habit.habitId, newStreak, streakBroken)
     }
 
   return DayRolloverResult(habitUpdates = habitUpdates, newGraceDaysUsed = newGraceDaysUsed, isPerfectDay = false)

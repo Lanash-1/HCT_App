@@ -45,6 +45,8 @@ private class FakeChallengeRepositoryForRecap(private val active: ChallengeEntit
   override fun observeWitnessed(userId: String) = error("not used")
 
   override fun observeChallenge(challengeId: String) = error("not used")
+
+  override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 
 private class FakeRecapRepositoryForRecap(private val recaps: List<RecapEntity>) : RecapRepository {

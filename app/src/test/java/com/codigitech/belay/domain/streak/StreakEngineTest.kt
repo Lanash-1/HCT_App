@@ -30,7 +30,7 @@ class StreakEngineTest {
         )
       )
 
-    assertEquals(listOf(HabitStreakUpdate("h1", 4), HabitStreakUpdate("h2", 1)), result.habitUpdates)
+    assertEquals(listOf(HabitStreakUpdate("h1", 4, streakBroken = false), HabitStreakUpdate("h2", 1, streakBroken = false)), result.habitUpdates)
     assertEquals(0, result.newGraceDaysUsed)
     assertEquals(true, result.isPerfectDay)
   }
@@ -45,7 +45,7 @@ class StreakEngineTest {
         )
       )
 
-    assertEquals(listOf(HabitStreakUpdate("h1", 6), HabitStreakUpdate("h2", 7)), result.habitUpdates)
+    assertEquals(listOf(HabitStreakUpdate("h1", 6, streakBroken = false), HabitStreakUpdate("h2", 7, streakBroken = false)), result.habitUpdates)
     assertEquals(1, result.newGraceDaysUsed)
     assertEquals(false, result.isPerfectDay)
   }
@@ -60,9 +60,22 @@ class StreakEngineTest {
         )
       )
 
-    assertEquals(listOf(HabitStreakUpdate("h1", 6), HabitStreakUpdate("h2", 0)), result.habitUpdates)
+    assertEquals(listOf(HabitStreakUpdate("h1", 6, streakBroken = false), HabitStreakUpdate("h2", 0, streakBroken = true)), result.habitUpdates)
     assertEquals(2, result.newGraceDaysUsed)
     assertEquals(false, result.isPerfectDay)
+  }
+
+  @Test
+  fun `grace-exhausted miss on a habit already at zero streak does not count as a break`() {
+    val result =
+      evaluateDayRollover(
+        DayRolloverInput(
+          habits = listOf(habit("h1", checked = false, currentStreak = 0)),
+          grace = ChallengeGraceState(graceDaysTotal = 1, graceDaysUsed = 1),
+        )
+      )
+
+    assertEquals(listOf(HabitStreakUpdate("h1", 0, streakBroken = false)), result.habitUpdates)
   }
 
   @Test
@@ -81,7 +94,11 @@ class StreakEngineTest {
       )
 
     assertEquals(
-      listOf(HabitStreakUpdate("h1", 3), HabitStreakUpdate("h2", 9), HabitStreakUpdate("h3", 2)),
+      listOf(
+        HabitStreakUpdate("h1", 3, streakBroken = false),
+        HabitStreakUpdate("h2", 9, streakBroken = false),
+        HabitStreakUpdate("h3", 2, streakBroken = false),
+      ),
       result.habitUpdates,
     )
     assertEquals(2, result.newGraceDaysUsed)
@@ -104,7 +121,11 @@ class StreakEngineTest {
       )
 
     assertEquals(
-      listOf(HabitStreakUpdate("h1", 0), HabitStreakUpdate("h2", 0), HabitStreakUpdate("h3", 2)),
+      listOf(
+        HabitStreakUpdate("h1", 0, streakBroken = true),
+        HabitStreakUpdate("h2", 0, streakBroken = true),
+        HabitStreakUpdate("h3", 2, streakBroken = false),
+      ),
       result.habitUpdates,
     )
     assertEquals(1, result.newGraceDaysUsed)
@@ -121,7 +142,7 @@ class StreakEngineTest {
         )
       )
 
-    assertEquals(listOf(HabitStreakUpdate("h1", 0)), result.habitUpdates)
+    assertEquals(listOf(HabitStreakUpdate("h1", 0, streakBroken = true)), result.habitUpdates)
     assertEquals(0, result.newGraceDaysUsed)
     assertEquals(false, result.isPerfectDay)
   }

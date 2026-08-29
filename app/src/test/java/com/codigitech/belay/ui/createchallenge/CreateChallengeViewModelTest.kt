@@ -84,6 +84,8 @@ private class FakeChallengeRepository(
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = MutableStateFlow(emptyList())
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = MutableStateFlow(null)
+
+  override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 
 class CreateChallengeViewModelTest {

@@ -45,6 +45,7 @@ This is a Firestore schema — each "table" below is a top-level collection, fla
 | `reminder_time` | string (HH:mm), nullable | per-habit reminder — PRD §6.1 |
 | `sort_order` | int | max 5 habits per challenge, enforced at write time |
 | `current_streak` | int | denormalized for fast read; recalculated by Cloud Function on each check-in |
+| `streak_broken_at` | date, nullable | set by `dayRollover` only on the day this habit's streak was reset by grace exhaustion (PRD §6.2); cleared on every later rollover that doesn't re-break it |
 
 ### `check_ins`
 | Field | Type | Notes |
