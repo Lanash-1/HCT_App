@@ -76,7 +76,12 @@ exports.dayRollover = onSchedule('every day 00:10', async () => {
 
     const batch = db.batch();
     for (const update of result.habitUpdates) {
-      batch.update(db.collection('habits').doc(update.habitId), { current_streak: update.newStreak });
+      batch.update(db.collection('habits').doc(update.habitId), {
+        current_streak: update.newStreak,
+        // Set only on the day a streak actually breaks; cleared otherwise so a stale flag from
+        // an earlier day never lingers (PRD §6.2 — the client shows a recovery moment for this).
+        streak_broken_at: update.streakBroken ? date : null,
+      });
     }
     batch.update(challengeDoc.ref, {
       grace_days_used: result.newGraceDaysUsed,

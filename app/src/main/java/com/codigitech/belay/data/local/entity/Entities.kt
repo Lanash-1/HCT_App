@@ -58,6 +58,7 @@ data class HabitEntity(
   val reminderTime: String?, // HH:mm, nullable
   val sortOrder: Int,
   val currentStreak: Int,
+  val streakBrokenAt: String? = null, // ISO date, nullable — set by dayRollover only on the day grace exhaustion broke this habit's streak (PRD §6.2)
 )
 
 /** Mirrors DATA_MODEL.md `check_ins`. One row per habit per day. */

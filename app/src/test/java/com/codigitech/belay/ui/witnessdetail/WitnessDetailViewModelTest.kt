@@ -53,6 +53,8 @@ private class FakeChallengeRepositoryForDetail(private val challenge: ChallengeE
   override fun observeWitnessed(userId: String) = error("not used")
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = MutableStateFlow(challenge)
+
+  override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 
 private class FakeHabitRepositoryForDetail(private val habits: List<HabitEntity>) : HabitRepository {

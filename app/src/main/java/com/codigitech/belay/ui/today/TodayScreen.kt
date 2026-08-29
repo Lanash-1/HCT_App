@@ -29,7 +29,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -41,6 +43,7 @@ fun TodayRoute(modifier: Modifier = Modifier, viewModel: TodayViewModel = hiltVi
     uiState = uiState,
     onToggleHabit = viewModel::toggleHabit,
     onDismissNudge = viewModel::dismissNudge,
+    onDismissRecovery = viewModel::dismissRecovery,
     modifier = modifier,
   )
 }
@@ -50,6 +53,7 @@ fun TodayScreen(
   uiState: TodayUiState,
   onToggleHabit: (String) -> Unit,
   onDismissNudge: () -> Unit,
+  onDismissRecovery: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   if (!uiState.hasActiveChallenge) {
@@ -78,6 +82,39 @@ fun TodayScreen(
     SummaryStrip(uiState)
 
     uiState.nudgeMessage?.let { NudgeToast(message = it, onDismiss = onDismissNudge) }
+  }
+
+  if (uiState.brokenHabitNames.isNotEmpty()) {
+    StreakRecoveryDialog(habitNames = uiState.brokenHabitNames, onDismiss = onDismissRecovery)
+  }
+}
+
+/** A designed moment for hitting zero grace with a miss (PRD §6.2) — not a silent streak reset. */
+@Composable
+private fun StreakRecoveryDialog(habitNames: List<String>, onDismiss: () -> Unit) {
+  Dialog(onDismissRequest = onDismiss) {
+    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
+      Column(
+        modifier = Modifier.padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        Text(TodayCopy.RECOVERY_TITLE, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Text(
+          TodayCopy.recoveryHabitList(habitNames),
+          style = MaterialTheme.typography.titleMedium,
+          color = MaterialTheme.colorScheme.primary,
+          textAlign = TextAlign.Center,
+        )
+        Text(
+          TodayCopy.RECOVERY_DETAIL,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          textAlign = TextAlign.Center,
+        )
+        TextButton(onClick = onDismiss) { Text(TodayCopy.RECOVERY_CONTINUE) }
+      }
+    }
   }
 }
 

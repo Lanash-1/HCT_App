@@ -27,7 +27,7 @@ import com.codigitech.belay.data.local.entity.UserEntity
     InteractionEntity::class,
     RecapEntity::class,
   ],
-  version = 1,
+  version = 2,
   exportSchema = true,
 )
 abstract class BelayDatabase : RoomDatabase() {

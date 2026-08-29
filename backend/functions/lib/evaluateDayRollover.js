@@ -15,7 +15,7 @@
  *   grace: {graceDaysTotal: number, graceDaysUsed: number},
  * }} input
  * @returns {{
- *   habitUpdates: Array<{habitId: string, newStreak: number}>,
+ *   habitUpdates: Array<{habitId: string, newStreak: number, streakBroken: boolean}>,
  *   newGraceDaysUsed: number,
  *   isPerfectDay: boolean,
  * }}
@@ -26,7 +26,7 @@ function evaluateDayRollover(input) {
 
   if (isPerfectDay) {
     return {
-      habitUpdates: habits.map((habit) => ({ habitId: habit.habitId, newStreak: habit.currentStreak + 1 })),
+      habitUpdates: habits.map((habit) => ({ habitId: habit.habitId, newStreak: habit.currentStreak + 1, streakBroken: false })),
       newGraceDaysUsed: grace.graceDaysUsed,
       isPerfectDay: true,
     };
@@ -44,7 +44,8 @@ function evaluateDayRollover(input) {
     } else {
       newStreak = 0;
     }
-    return { habitId: habit.habitId, newStreak };
+    const streakBroken = !habit.checked && !graceAvailable && habit.currentStreak > 0;
+    return { habitId: habit.habitId, newStreak, streakBroken };
   });
 
   return { habitUpdates, newGraceDaysUsed, isPerfectDay: false };

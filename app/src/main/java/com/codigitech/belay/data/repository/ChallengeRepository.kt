@@ -13,6 +13,7 @@ import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /** A habit as specified during challenge creation, before it has an id (PRD §5.2). */
 data class HabitSpec(val name: String, val detail: String?, val icon: String? = null, val reminderTime: String? = null)
@@ -45,6 +46,14 @@ interface ChallengeRepository {
 
   /** A single challenge by id, regardless of who's asking — used by the witness-detail screen (PRD §5.7). */
   fun observeChallenge(challengeId: String): Flow<ChallengeEntity?>
+
+  /**
+   * Mirrors this challenge's Firestore challenge/habit docs into Room for as long as this is
+   * collected — the only path by which server-computed fields (grace/perfect-days, streaks,
+   * streak_broken_at) written by the dayRollover Cloud Function reach the device (PRD §6.2).
+   * Never returns; cancel the caller's scope to stop.
+   */
+  suspend fun syncRemoteUpdates(challengeId: String)
 }
 
 class ChallengeRepositoryImpl
@@ -131,6 +140,16 @@ constructor(
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = challengeDao.observeWitnessed(userId)
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = challengeDao.observe(challengeId)
+
+  override suspend fun syncRemoteUpdates(challengeId: String) {
+    combine(challengeRemoteDataSource.observe(challengeId), habitRemoteDataSource.observeForChallenge(challengeId)) { challenge, habits ->
+        challenge to habits
+      }
+      .collect { (challenge, habits) ->
+        challenge?.let { challengeDao.upsert(it) }
+        if (habits.isNotEmpty()) habitDao.upsertAll(habits)
+      }
+  }
 
   companion object {
     const val MAX_HABITS = 5

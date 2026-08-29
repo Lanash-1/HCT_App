@@ -21,11 +21,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
@@ -51,6 +54,7 @@ data class TodayUiState(
   val nudgeMessage: String? = null,
   val challengeId: String? = null, // not rendered; needed by toggleHabit
   val latestNudgeId: String? = null, // not rendered; needed by dismissNudge
+  val brokenHabitNames: List<String> = emptyList(), // PRD §6.2 recovery moment
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -71,6 +75,7 @@ constructor(
   val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
 
   private val dismissedNudgeId = MutableStateFlow<String?>(null)
+  private val recoveryDismissed = MutableStateFlow(false)
 
   private val today: Long =
     Instant.ofEpochMilli(clock.nowEpochMillis()).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
@@ -85,6 +90,14 @@ constructor(
         .flatMapLatest(::challengeUiStateFlow)
         .onEach { state -> _uiState.value = state }
         .launchIn(viewModelScope)
+
+      viewModelScope.launch {
+        challengeRepository
+          .observeActiveForChallenger(userId)
+          .map { it?.challengeId }
+          .distinctUntilChanged()
+          .collectLatest { challengeId -> if (challengeId != null) challengeRepository.syncRemoteUpdates(challengeId) }
+      }
     }
   }
 
@@ -93,28 +106,33 @@ constructor(
       flowOf(TodayUiState(isLoading = false, hasActiveChallenge = false))
     } else {
       combine(
-        habitRepository.observeForChallenge(challenge.challengeId),
-        checkInRepository.observeForChallengeAndDate(challenge.challengeId, today),
-        interactionRepository.observeForChallenge(challenge.challengeId),
-        witnessNameFlow(challenge.witnessUserId),
-        dismissedNudgeId,
-      ) { habits, checkIns, interactions, witnessName, dismissedNudgeId ->
-        buildState(challenge, habits, checkIns, interactions, witnessName, dismissedNudgeId)
-      }
+        combine(
+          habitRepository.observeForChallenge(challenge.challengeId),
+          checkInRepository.observeForChallengeAndDate(challenge.challengeId, today),
+          interactionRepository.observeForChallenge(challenge.challengeId),
+          witnessNameFlow(challenge.witnessUserId),
+          dismissedNudgeId,
+        ) { habits, checkIns, interactions, witnessName, dismissedNudgeId ->
+          HabitDayContext(habits, checkIns, interactions, witnessName, dismissedNudgeId)
+        },
+        recoveryDismissed,
+      ) { context, recoveryDismissed -> buildState(challenge, context, recoveryDismissed) }
     }
 
   private fun witnessNameFlow(witnessUserId: String) = flow {
     emit(userRepository.getProfile(witnessUserId)?.displayName ?: "")
   }
 
-  private fun buildState(
-    challenge: ChallengeEntity,
-    habits: List<HabitEntity>,
-    checkIns: List<CheckInEntity>,
-    interactions: List<InteractionEntity>,
-    witnessName: String,
-    dismissedNudgeId: String?,
-  ): TodayUiState {
+  private data class HabitDayContext(
+    val habits: List<HabitEntity>,
+    val checkIns: List<CheckInEntity>,
+    val interactions: List<InteractionEntity>,
+    val witnessName: String,
+    val dismissedNudgeId: String?,
+  )
+
+  private fun buildState(challenge: ChallengeEntity, context: HabitDayContext, recoveryDismissed: Boolean): TodayUiState {
+    val (habits, checkIns, interactions, witnessName, dismissedNudgeId) = context
     val checkedHabitIds = checkIns.filter { it.done }.map { it.habitId }.toSet()
     val habitStates =
       habits.map { habit ->
@@ -143,6 +161,7 @@ constructor(
       nudgeMessage = latestNudge?.takeIf { it.interactionId != dismissedNudgeId }?.message,
       challengeId = challenge.challengeId,
       latestNudgeId = latestNudge?.interactionId,
+      brokenHabitNames = if (recoveryDismissed) emptyList() else habits.filter { it.streakBrokenAt != null }.map { it.name },
     )
   }
 
@@ -157,5 +176,9 @@ constructor(
 
   fun dismissNudge() {
     _uiState.value.latestNudgeId?.let { dismissedNudgeId.value = it }
+  }
+
+  fun dismissRecovery() {
+    recoveryDismissed.value = true
   }
 }

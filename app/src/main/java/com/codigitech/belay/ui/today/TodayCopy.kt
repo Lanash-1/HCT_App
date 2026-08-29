@@ -8,8 +8,13 @@ object TodayCopy {
   const val GRACE_LEFT_LABEL = "Grace left"
   const val DAYS_TO_GO_LABEL = "Days to go"
   const val NUDGE_DISMISS_LABEL = "Got it"
+  const val RECOVERY_TITLE = "Your streak reset"
+  const val RECOVERY_DETAIL = "Grace ran out, so this one's starting over. That's the deal — it doesn't erase what you already built."
+  const val RECOVERY_CONTINUE = "Start again"
 
   fun progressLabel(checked: Int, total: Int): String = "$checked/$total"
+
+  fun recoveryHabitList(names: List<String>): String = names.joinToString(", ")
 
   fun witnessStatusText(witnessName: String, checked: Int, total: Int): String {
     val statusShort =

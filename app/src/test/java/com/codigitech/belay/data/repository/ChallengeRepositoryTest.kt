@@ -11,6 +11,8 @@ import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
 import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -57,22 +59,32 @@ private class FakeHabitDao : HabitDao {
     MutableStateFlow(stored.filter { it.challengeId == challengeId }.sortedBy { it.sortOrder })
 }
 
-private class FakeChallengeRemoteDataSource(private val unreachable: Boolean = false) : ChallengeRemoteDataSource {
+private class FakeChallengeRemoteDataSource(
+  private val unreachable: Boolean = false,
+  private val remoteUpdates: Flow<ChallengeEntity?> = MutableStateFlow(null),
+) : ChallengeRemoteDataSource {
   val stored = mutableMapOf<String, ChallengeEntity>()
 
   override suspend fun upsert(challenge: ChallengeEntity) {
     if (unreachable) throw ChallengeFirestoreUnavailableException()
     stored[challenge.challengeId] = challenge
   }
+
+  override fun observe(challengeId: String): Flow<ChallengeEntity?> = remoteUpdates
 }
 
-private class FakeHabitRemoteDataSource(private val unreachable: Boolean = false) : HabitRemoteDataSource {
+private class FakeHabitRemoteDataSource(
+  private val unreachable: Boolean = false,
+  private val remoteUpdates: Flow<List<HabitEntity>> = MutableStateFlow(emptyList()),
+) : HabitRemoteDataSource {
   val stored = mutableListOf<HabitEntity>()
 
   override suspend fun upsertAll(habits: List<HabitEntity>) {
     if (unreachable) throw ChallengeFirestoreUnavailableException()
     stored += habits
   }
+
+  override fun observeForChallenge(challengeId: String): Flow<List<HabitEntity>> = remoteUpdates
 }
 
 /** Stands in for `FirebaseFirestoreException: Failed to get document because the client is offline.` */
@@ -90,6 +102,7 @@ private class FakeReminderScheduler : ReminderScheduler {
   }
 }
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ChallengeRepositoryTest {
 
   private val fixedClock = BelayClock { 86_400_000L } // epoch day 1, midnight UTC
@@ -333,6 +346,29 @@ class ChallengeRepositoryTest {
 
     assertTrue(result is ChallengeCreationResult.Success)
     assertEquals("abandoned", challengeDao.stored["challenge-old"]?.status)
+  }
+
+  @Test
+  fun `syncRemoteUpdates mirrors remote challenge and habit writes into Room`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val habitDao = FakeHabitDao()
+    val remoteChallenge =
+      MutableStateFlow(
+        ChallengeEntity("challenge-1", "user-1", "user-2", "Morning reset", 21, 2, 1, 3, startDate = 1L, status = "active")
+      )
+    val remoteHabits =
+      MutableStateFlow(
+        listOf(HabitEntity("h1", "challenge-1", "Run", null, null, null, 0, 5, streakBrokenAt = "2026-08-29"))
+      )
+    val challengeRemote = FakeChallengeRemoteDataSource(remoteUpdates = remoteChallenge)
+    val habitRemote = FakeHabitRemoteDataSource(remoteUpdates = remoteHabits)
+
+    val job = launch { repository(challengeDao, habitDao, challengeRemote, habitRemote).syncRemoteUpdates("challenge-1") }
+    runCurrent()
+
+    assertEquals(remoteChallenge.value, challengeDao.stored["challenge-1"])
+    assertEquals(remoteHabits.value, habitDao.stored)
+    job.cancel()
   }
 
   @Test
