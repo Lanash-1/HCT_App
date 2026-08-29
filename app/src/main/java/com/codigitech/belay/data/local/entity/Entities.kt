@@ -82,6 +82,7 @@ data class CheckInEntity(
   val done: Boolean,
   val checkedAt: Long?,
   val clientIdempotencyKey: String,
+  val synced: Boolean = true, // local-only bookkeeping — false until the Firestore write succeeds (PRD §6.6)
 )
 
 /** Mirrors DATA_MODEL.md `pairings`. */

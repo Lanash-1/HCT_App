@@ -10,6 +10,8 @@ import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.ChallengeRepositoryImpl
 import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.CheckInRepositoryImpl
+import com.codigitech.belay.data.repository.CheckInSyncScheduler
+import com.codigitech.belay.data.sync.WorkManagerCheckInSyncScheduler
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.HabitRepositoryImpl
 import com.codigitech.belay.data.repository.InteractionRepository
@@ -71,6 +73,8 @@ abstract class RepositoryModule {
   @Binds abstract fun bindIdGenerator(impl: UuidIdGenerator): IdGenerator
 
   @Binds abstract fun bindLocalDataReset(impl: RoomLocalDataReset): LocalDataReset
+
+  @Binds abstract fun bindCheckInSyncScheduler(impl: WorkManagerCheckInSyncScheduler): CheckInSyncScheduler
 
   companion object {
     @Provides @Singleton fun providePairCodeGenerator(): PairCodeGenerator = PairCodeGenerator()
