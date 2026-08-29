@@ -2,6 +2,8 @@ package com.codigitech.belay.di
 
 import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.core.IdGenerator
+import com.codigitech.belay.core.LocalDataReset
+import com.codigitech.belay.core.RoomLocalDataReset
 import com.codigitech.belay.core.SystemBelayClock
 import com.codigitech.belay.core.UuidIdGenerator
 import com.codigitech.belay.data.repository.ChallengeRepository
@@ -67,6 +69,8 @@ abstract class RepositoryModule {
   @Binds abstract fun bindClock(impl: SystemBelayClock): BelayClock
 
   @Binds abstract fun bindIdGenerator(impl: UuidIdGenerator): IdGenerator
+
+  @Binds abstract fun bindLocalDataReset(impl: RoomLocalDataReset): LocalDataReset
 
   companion object {
     @Provides @Singleton fun providePairCodeGenerator(): PairCodeGenerator = PairCodeGenerator()

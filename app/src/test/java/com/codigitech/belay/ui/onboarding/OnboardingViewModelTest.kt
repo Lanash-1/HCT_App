@@ -28,7 +28,9 @@ private class FakeAuthRepository(private val userId: String? = "user-1", private
 
   override fun currentUserEmail(): String? = email
 
-  override fun logOut() = Unit
+  override suspend fun logOut() = Unit
+
+  override suspend fun deleteAccount(): com.codigitech.belay.data.repository.AccountDeletionResult = error("not used")
 }
 
 private class FakeUserRepository : UserRepository {

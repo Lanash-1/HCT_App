@@ -62,8 +62,10 @@ constructor(private val authRepository: AuthRepository) : ViewModel() {
   }
 
   fun logOut() {
-    authRepository.logOut()
-    _uiState.update { AuthUiState() }
+    viewModelScope.launch {
+      authRepository.logOut()
+      _uiState.update { AuthUiState() }
+    }
   }
 }
 

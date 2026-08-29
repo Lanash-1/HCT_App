@@ -29,7 +29,7 @@ private fun tabsFor(mode: String): List<MainTab> =
   if (mode == "witness") listOf(MainTab.Watching, MainTab.Profile) else listOf(MainTab.Today, MainTab.Recap, MainTab.Profile)
 
 @Composable
-fun MainTabsScreen(mode: String, onOpenWitnessDetail: (String) -> Unit, modifier: Modifier = Modifier) {
+fun MainTabsScreen(mode: String, onOpenWitnessDetail: (String) -> Unit, onSignedOut: () -> Unit, modifier: Modifier = Modifier) {
   val tabs = tabsFor(mode)
   var selectedTab by remember { mutableStateOf(tabs.first()) }
   LaunchedEffect(mode) {
@@ -51,7 +51,7 @@ fun MainTabsScreen(mode: String, onOpenWitnessDetail: (String) -> Unit, modifier
       MainTab.Today -> TodayRoute(modifier = contentModifier)
       MainTab.Recap -> RecapRoute(modifier = contentModifier)
       MainTab.Watching -> WatchingRoute(onOpenPerson = onOpenWitnessDetail, modifier = contentModifier)
-      MainTab.Profile -> ProfileRoute(onOpenPerson = onOpenWitnessDetail, modifier = contentModifier)
+      MainTab.Profile -> ProfileRoute(onOpenPerson = onOpenWitnessDetail, onSignedOut = onSignedOut, modifier = contentModifier)
     }
   }
 }

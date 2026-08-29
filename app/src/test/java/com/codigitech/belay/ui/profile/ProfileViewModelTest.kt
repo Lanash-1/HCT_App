@@ -2,11 +2,14 @@ package com.codigitech.belay.ui.profile
 
 import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.data.local.entity.ChallengeEntity
+import com.codigitech.belay.data.local.entity.CheckInEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
 import com.codigitech.belay.data.local.entity.UserEntity
+import com.codigitech.belay.data.repository.AccountDeletionResult
 import com.codigitech.belay.data.repository.AuthOutcome
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.ChallengeRepository
+import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.UserRepository
 import com.codigitech.belay.testutil.MainDispatcherRule
@@ -23,7 +26,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-private class FakeAuthRepositoryForProfile(private val userId: String? = "user-1") : AuthRepository {
+private class FakeAuthRepositoryForProfile(
+  private val userId: String? = "user-1",
+  private val deletionResult: AccountDeletionResult = AccountDeletionResult.Success,
+) : AuthRepository {
+  var deleteAccountCalled = false
+
   override suspend fun signUp(email: String, password: String): AuthOutcome = AuthOutcome.Success("unused")
 
   override suspend fun logIn(email: String, password: String): AuthOutcome = AuthOutcome.Success("unused")
@@ -32,7 +40,12 @@ private class FakeAuthRepositoryForProfile(private val userId: String? = "user-1
 
   override fun currentUserEmail(): String? = "arun@example.com"
 
-  override fun logOut() = Unit
+  override suspend fun logOut() = Unit
+
+  override suspend fun deleteAccount(): AccountDeletionResult {
+    deleteAccountCalled = true
+    return deletionResult
+  }
 }
 
 private class FakeUserRepositoryForProfile(private val profiles: Map<String, UserEntity>) : UserRepository {
@@ -61,7 +74,10 @@ private class FakeUserRepositoryForProfile(private val profiles: Map<String, Use
 
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
-  override fun observeLocalUser(userId: String): Flow<UserEntity?> = MutableStateFlow(profiles[userId])
+  val localUserFlows = mutableMapOf<String, MutableStateFlow<UserEntity?>>()
+
+  override fun observeLocalUser(userId: String): Flow<UserEntity?> =
+    localUserFlows.getOrPut(userId) { MutableStateFlow(profiles[userId]) }
 }
 
 private class FakeChallengeRepositoryForProfile(
@@ -90,6 +106,14 @@ private class FakeHabitRepositoryForProfile(private val byChallenge: Map<String,
   override fun observeForChallenge(challengeId: String): Flow<List<HabitEntity>> = MutableStateFlow(byChallenge[challengeId].orEmpty())
 
   override suspend fun updateStreak(habit: HabitEntity, newStreak: Int) = error("not used")
+}
+
+private class FakeCheckInRepositoryForProfile(private val byChallenge: Map<String, List<CheckInEntity>> = emptyMap()) : CheckInRepository {
+  override fun observeForChallengeAndDate(challengeId: String, date: Long) = error("not used")
+
+  override fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>> = MutableStateFlow(byChallenge[challengeId].orEmpty())
+
+  override suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean) = error("not used")
 }
 
 class ProfileViewModelTest {
@@ -139,7 +163,8 @@ class ProfileViewModelTest {
     userRepository: FakeUserRepositoryForProfile = FakeUserRepositoryForProfile(mapOf("user-1" to user, "user-2" to witness)),
     challengeRepository: ChallengeRepository = FakeChallengeRepositoryForProfile(activeChallenge),
     habitRepository: HabitRepository = FakeHabitRepositoryForProfile(mapOf("challenge-1" to ownHabits)),
-  ) = ProfileViewModel(authRepository, userRepository, challengeRepository, habitRepository, fixedClock)
+    checkInRepository: CheckInRepository = FakeCheckInRepositoryForProfile(),
+  ) = ProfileViewModel(authRepository, userRepository, challengeRepository, habitRepository, checkInRepository, fixedClock)
 
   @Test
   fun `no active challenge and nobody watched surfaces zeroed stats and no rows`() = runTest {
@@ -248,5 +273,57 @@ class ProfileViewModelTest {
     vm.setDailyReminderTime("08:30")
 
     assertEquals(listOf("user-1" to "08:30"), userRepository.reminderUpdates)
+  }
+
+  @Test
+  fun `deleteAccount calls the repository and marks the account deleted on success`() = runTest {
+    val authRepository = FakeAuthRepositoryForProfile()
+    val vm = viewModel(authRepository = authRepository)
+
+    vm.deleteAccount()
+
+    assertTrue(authRepository.deleteAccountCalled)
+    assertTrue(vm.uiState.value.didDeleteAccount)
+    assertFalse(vm.uiState.value.isDeletingAccount)
+    assertNull(vm.uiState.value.deleteErrorMessage)
+  }
+
+  @Test
+  fun `deleteAccount surfaces a failure message instead of marking the account deleted`() = runTest {
+    val authRepository = FakeAuthRepositoryForProfile(deletionResult = AccountDeletionResult.Failure("network error"))
+    val vm = viewModel(authRepository = authRepository)
+
+    vm.deleteAccount()
+
+    assertFalse(vm.uiState.value.didDeleteAccount)
+    assertEquals("network error", vm.uiState.value.deleteErrorMessage)
+  }
+
+  @Test
+  fun `a background Room refresh does not wipe out a pending delete-account error`() = runTest {
+    val authRepository = FakeAuthRepositoryForProfile(deletionResult = AccountDeletionResult.Failure("network error"))
+    val userRepository = FakeUserRepositoryForProfile(mapOf("user-1" to user, "user-2" to witness))
+    val vm = viewModel(authRepository = authRepository, userRepository = userRepository)
+
+    vm.deleteAccount()
+    assertEquals("network error", vm.uiState.value.deleteErrorMessage)
+
+    // Simulates e.g. a Firestore-driven Room write elsewhere in the app re-emitting this user row —
+    // the reactive pipeline rebuilding state from Room must not clobber the still-pending error.
+    userRepository.localUserFlows.getValue("user-1").value = user.copy(displayName = "Arun K")
+
+    assertEquals("network error", vm.uiState.value.deleteErrorMessage)
+  }
+
+  @Test
+  fun `exportData bundles the profile and own challenge into JSON`() = runTest {
+    val checkIns = listOf(CheckInEntity("check-1", "habit-1", "challenge-1", date = 3L, done = true, checkedAt = 0L, clientIdempotencyKey = "check-1"))
+    val vm = viewModel(checkInRepository = FakeCheckInRepositoryForProfile(mapOf("challenge-1" to checkIns)))
+
+    val json = vm.exportData()
+
+    assertTrue(json.contains("\"displayName\":\"Arun\""))
+    assertTrue(json.contains("\"name\":\"Run 3km\""))
+    assertTrue(json.contains("\"done\":true"))
   }
 }

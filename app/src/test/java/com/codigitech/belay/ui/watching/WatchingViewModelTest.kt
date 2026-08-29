@@ -38,7 +38,9 @@ private class FakeAuthRepositoryForWatching(private val userId: String? = "witne
 
   override fun currentUserEmail(): String? = "priya@example.com"
 
-  override fun logOut() = Unit
+  override suspend fun logOut() = Unit
+
+  override suspend fun deleteAccount(): com.codigitech.belay.data.repository.AccountDeletionResult = error("not used")
 }
 
 private class FakeChallengeRepositoryForWatching(private val witnessed: List<ChallengeEntity>) : ChallengeRepository {

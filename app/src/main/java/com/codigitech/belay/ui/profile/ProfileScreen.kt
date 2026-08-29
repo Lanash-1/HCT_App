@@ -2,6 +2,8 @@
 
 package com.codigitech.belay.ui.profile
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -28,22 +32,35 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.codigitech.belay.ui.common.BelayTimePickerDialog
+import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileRoute(onOpenPerson: (String) -> Unit, modifier: Modifier = Modifier, viewModel: ProfileViewModel = hiltViewModel()) {
+fun ProfileRoute(
+  onOpenPerson: (String) -> Unit,
+  onSignedOut: () -> Unit,
+  modifier: Modifier = Modifier,
+  viewModel: ProfileViewModel = hiltViewModel(),
+) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+  LaunchedEffect(uiState.didDeleteAccount) {
+    if (uiState.didDeleteAccount) onSignedOut()
+  }
 
   ProfileScreen(
     uiState = uiState,
@@ -52,6 +69,8 @@ fun ProfileRoute(onOpenPerson: (String) -> Unit, modifier: Modifier = Modifier, 
     onSetThemePref = viewModel::setThemePref,
     onSetNudgeAllowed = viewModel::setNudgeAllowed,
     onSetDailyReminderTime = viewModel::setDailyReminderTime,
+    onExportData = viewModel::exportData,
+    onDeleteAccount = viewModel::deleteAccount,
     modifier = modifier,
   )
 }
@@ -64,10 +83,15 @@ fun ProfileScreen(
   onSetThemePref: (String) -> Unit,
   onSetNudgeAllowed: (Boolean) -> Unit,
   onSetDailyReminderTime: (String) -> Unit,
+  onExportData: suspend () -> String,
+  onDeleteAccount: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   if (uiState.isLoading) return
   var showReminderDialog by remember { mutableStateOf(false) }
+  var showDeleteConfirm by remember { mutableStateOf(false) }
+  val context = LocalContext.current
+  val coroutineScope = rememberCoroutineScope()
 
   Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -118,6 +142,16 @@ fun ProfileScreen(
       SettingsRow(ProfileCopy.GRACE_DAYS_LEFT_LABEL, uiState.graceDaysLeft?.toString() ?: ProfileCopy.NO_ACTIVE_CHALLENGE, onClick = null)
     }
 
+    SectionLabel(ProfileCopy.ACCOUNT_LABEL)
+    Column {
+      TextButton(onClick = { coroutineScope.launch { shareExport(context, onExportData()) } }) { Text(ProfileCopy.EXPORT_DATA_LABEL) }
+      TextButton(onClick = { showDeleteConfirm = true }) {
+        Text(ProfileCopy.DELETE_ACCOUNT_LABEL, color = MaterialTheme.colorScheme.error)
+      }
+      if (uiState.isDeletingAccount) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+      uiState.deleteErrorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+    }
+
     Text(
       ProfileCopy.SWITCH_NOTE,
       modifier = Modifier.fillMaxWidth(),
@@ -137,6 +171,34 @@ fun ProfileScreen(
       },
     )
   }
+
+  if (showDeleteConfirm) {
+    AlertDialog(
+      onDismissRequest = { showDeleteConfirm = false },
+      title = { Text(ProfileCopy.DELETE_CONFIRM_TITLE) },
+      text = { Text(ProfileCopy.DELETE_CONFIRM_BODY) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showDeleteConfirm = false
+            onDeleteAccount()
+          }
+        ) {
+          Text(ProfileCopy.DELETE_CONFIRM_ACTION, color = MaterialTheme.colorScheme.error)
+        }
+      },
+      dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(ProfileCopy.DELETE_CANCEL) } },
+    )
+  }
+}
+
+private fun shareExport(context: Context, json: String) {
+  val intent =
+    Intent(Intent.ACTION_SEND).apply {
+      type = "application/json"
+      putExtra(Intent.EXTRA_TEXT, json)
+    }
+  context.startActivity(Intent.createChooser(intent, ProfileCopy.EXPORT_DATA_LABEL))
 }
 
 @Composable
