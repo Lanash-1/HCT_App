@@ -11,6 +11,11 @@ object CreateChallengeCopy {
   const val ADD_HABIT = "+  Add a habit"
   const val SET_REMINDER = "Set a reminder"
   const val CLEAR_REMINDER = "Clear"
+  const val NOTIFICATION_RATIONALE_TITLE = "Stay in the loop"
+  const val NOTIFICATION_RATIONALE_BODY =
+    "Your witness can only cheer or nudge you if you allow notifications — and habit reminders need them too."
+  const val NOTIFICATION_RATIONALE_CONFIRM = "Turn on notifications"
+  const val NOTIFICATION_RATIONALE_DISMISS = "Not now"
   const val DURATION_SECTION = "How long"
   const val WITNESS_SECTION = "Who's watching"
   const val WITNESS_EMPTY = "No one paired yet — pair with a witness from onboarding first."
