@@ -1,6 +1,7 @@
 package com.codigitech.belay.ui.today
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,12 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,11 +37,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun TodayRoute(modifier: Modifier = Modifier, viewModel: TodayViewModel = hiltViewModel()) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-  TodayScreen(uiState = uiState, onToggleHabit = viewModel::toggleHabit, modifier = modifier)
+  TodayScreen(
+    uiState = uiState,
+    onToggleHabit = viewModel::toggleHabit,
+    onDismissNudge = viewModel::dismissNudge,
+    modifier = modifier,
+  )
 }
 
 @Composable
-fun TodayScreen(uiState: TodayUiState, onToggleHabit: (String) -> Unit, modifier: Modifier = Modifier) {
+fun TodayScreen(
+  uiState: TodayUiState,
+  onToggleHabit: (String) -> Unit,
+  onDismissNudge: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   if (!uiState.hasActiveChallenge) {
     EmptyState(modifier)
     return
@@ -44,6 +59,8 @@ fun TodayScreen(uiState: TodayUiState, onToggleHabit: (String) -> Unit, modifier
 
   Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
     Text(uiState.challengeTitle, style = MaterialTheme.typography.headlineSmall)
+
+    WitnessStatusPill(uiState.witnessStatusText)
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
       ProgressRing(
@@ -56,7 +73,49 @@ fun TodayScreen(uiState: TodayUiState, onToggleHabit: (String) -> Unit, modifier
       uiState.habits.forEach { habit -> HabitRow(habit = habit, onToggle = { onToggleHabit(habit.habitId) }) }
     }
 
+    uiState.cheerMessage?.let { CheerCard(it) }
+
     SummaryStrip(uiState)
+
+    uiState.nudgeMessage?.let { NudgeToast(message = it, onDismiss = onDismissNudge) }
+  }
+}
+
+@Composable
+private fun WitnessStatusPill(text: String, modifier: Modifier = Modifier) {
+  if (text.isBlank()) return
+  Surface(modifier = modifier, shape = RoundedCornerShape(100), color = MaterialTheme.colorScheme.secondaryContainer) {
+    Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+      Box(modifier = Modifier.size(7.dp).background(color = MaterialTheme.colorScheme.primary, shape = CircleShape))
+      Text(
+        text,
+        modifier = Modifier.padding(start = 8.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+      )
+    }
+  }
+}
+
+@Composable
+private fun CheerCard(message: String, modifier: Modifier = Modifier) {
+  Card(modifier = modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Text(message, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+  }
+}
+
+@Composable
+private fun NudgeToast(message: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+  Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.inverseSurface) {
+    Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+      Text(
+        message,
+        modifier = Modifier.weight(1f),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.inverseOnSurface,
+      )
+      TextButton(onClick = onDismiss) { Text(TodayCopy.NUDGE_DISMISS_LABEL) }
+    }
   }
 }
 
