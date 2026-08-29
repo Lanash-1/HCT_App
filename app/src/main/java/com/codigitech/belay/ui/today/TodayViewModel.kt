@@ -6,10 +6,13 @@ import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.CheckInEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.local.entity.InteractionEntity
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.HabitRepository
+import com.codigitech.belay.data.repository.InteractionRepository
+import com.codigitech.belay.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -20,10 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class TodayHabitUiState(
@@ -43,7 +46,11 @@ data class TodayUiState(
   val perfectDays: Int = 0,
   val graceDaysLeft: Int = 0,
   val daysToGo: Int = 0,
+  val witnessStatusText: String = "",
+  val cheerMessage: String? = null,
+  val nudgeMessage: String? = null,
   val challengeId: String? = null, // not rendered; needed by toggleHabit
+  val latestNudgeId: String? = null, // not rendered; needed by dismissNudge
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,11 +62,15 @@ constructor(
   private val challengeRepository: ChallengeRepository,
   private val habitRepository: HabitRepository,
   private val checkInRepository: CheckInRepository,
+  private val userRepository: UserRepository,
+  private val interactionRepository: InteractionRepository,
   private val clock: BelayClock,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(TodayUiState())
   val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
+
+  private val dismissedNudgeId = MutableStateFlow<String?>(null)
 
   private val today: Long =
     Instant.ofEpochMilli(clock.nowEpochMillis()).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
@@ -67,7 +78,7 @@ constructor(
   init {
     val userId = authRepository.currentUserId()
     if (userId == null) {
-      _uiState.update { it.copy(isLoading = false) }
+      _uiState.value = _uiState.value.copy(isLoading = false)
     } else {
       challengeRepository
         .observeActiveForChallenger(userId)
@@ -84,12 +95,26 @@ constructor(
       combine(
         habitRepository.observeForChallenge(challenge.challengeId),
         checkInRepository.observeForChallengeAndDate(challenge.challengeId, today),
-      ) { habits, checkIns ->
-        buildState(challenge, habits, checkIns)
+        interactionRepository.observeForChallenge(challenge.challengeId),
+        witnessNameFlow(challenge.witnessUserId),
+        dismissedNudgeId,
+      ) { habits, checkIns, interactions, witnessName, dismissedNudgeId ->
+        buildState(challenge, habits, checkIns, interactions, witnessName, dismissedNudgeId)
       }
     }
 
-  private fun buildState(challenge: ChallengeEntity, habits: List<HabitEntity>, checkIns: List<CheckInEntity>): TodayUiState {
+  private fun witnessNameFlow(witnessUserId: String) = flow {
+    emit(userRepository.getProfile(witnessUserId)?.displayName ?: "")
+  }
+
+  private fun buildState(
+    challenge: ChallengeEntity,
+    habits: List<HabitEntity>,
+    checkIns: List<CheckInEntity>,
+    interactions: List<InteractionEntity>,
+    witnessName: String,
+    dismissedNudgeId: String?,
+  ): TodayUiState {
     val checkedHabitIds = checkIns.filter { it.done }.map { it.habitId }.toSet()
     val habitStates =
       habits.map { habit ->
@@ -101,6 +126,9 @@ constructor(
           checkedToday = habit.habitId in checkedHabitIds,
         )
       }
+    val todaysInteractions = interactions.filter { it.date == today }
+    val latestCheer = todaysInteractions.filter { it.type == "cheer" }.maxByOrNull { it.createdAt }
+    val latestNudge = todaysInteractions.filter { it.type == "nudge" }.maxByOrNull { it.createdAt }
     return TodayUiState(
       isLoading = false,
       hasActiveChallenge = true,
@@ -110,7 +138,11 @@ constructor(
       perfectDays = challenge.perfectDays,
       graceDaysLeft = challenge.graceDaysTotal - challenge.graceDaysUsed,
       daysToGo = (challenge.durationDays - (today - challenge.startDate)).coerceAtLeast(0).toInt(),
+      witnessStatusText = TodayCopy.witnessStatusText(witnessName, checked = checkedHabitIds.size, total = habitStates.size),
+      cheerMessage = latestCheer?.message,
+      nudgeMessage = latestNudge?.takeIf { it.interactionId != dismissedNudgeId }?.message,
       challengeId = challenge.challengeId,
+      latestNudgeId = latestNudge?.interactionId,
     )
   }
 
@@ -121,5 +153,9 @@ constructor(
     viewModelScope.launch {
       checkInRepository.setCheckIn(habitId = habitId, challengeId = challengeId, date = today, done = !currentlyChecked)
     }
+  }
+
+  fun dismissNudge() {
+    _uiState.value.latestNudgeId?.let { dismissedNudgeId.value = it }
   }
 }

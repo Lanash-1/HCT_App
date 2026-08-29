@@ -4,17 +4,23 @@ import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.CheckInEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.local.entity.InteractionEntity
+import com.codigitech.belay.data.local.entity.UserEntity
 import com.codigitech.belay.data.repository.AuthOutcome
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.CheckInRepository
+import com.codigitech.belay.data.repository.CheerOrNudgeResult
 import com.codigitech.belay.data.repository.HabitRepository
+import com.codigitech.belay.data.repository.InteractionRepository
+import com.codigitech.belay.data.repository.UserRepository
 import com.codigitech.belay.testutil.MainDispatcherRule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -77,6 +83,26 @@ private class FakeCheckInRepositoryForToday(initial: List<CheckInEntity> = empty
   }
 }
 
+private class FakeUserRepositoryForToday(private val profiles: Map<String, UserEntity> = emptyMap()) : UserRepository {
+  override suspend fun ensureProfile(userId: String, displayName: String) = error("not used")
+
+  override suspend fun setDefaultMode(userId: String, mode: String) = error("not used")
+
+  override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
+
+  override fun observeLocalUser(userId: String): Flow<UserEntity?> = error("not used")
+}
+
+private class FakeInteractionRepositoryForToday(initial: List<InteractionEntity> = emptyList()) : InteractionRepository {
+  private val state = MutableStateFlow(initial)
+
+  override suspend fun sendCheer(challengeId: String, fromUserId: String, message: String): CheerOrNudgeResult = error("not used")
+
+  override suspend fun sendNudge(challengeId: String, fromUserId: String, message: String): CheerOrNudgeResult = error("not used")
+
+  override fun observeForChallenge(challengeId: String): Flow<List<InteractionEntity>> = state
+}
+
 class TodayViewModelTest {
 
   @get:Rule val mainDispatcherRule = MainDispatcherRule()
@@ -103,12 +129,24 @@ class TodayViewModelTest {
       HabitEntity("habit-2", "challenge-1", "Read", null, null, null, 1, currentStreak = 2),
     )
 
+  private val witness = UserEntity("user-2", "Priya", "AB12", "witness", "system", null, true, createdAt = 0L)
+
   private fun viewModel(
     authRepository: AuthRepository = FakeAuthRepositoryForToday(),
     challengeRepository: ChallengeRepository = FakeChallengeRepositoryForToday(activeChallenge),
     habitRepository: HabitRepository = FakeHabitRepositoryForToday(habits),
     checkInRepository: CheckInRepository = FakeCheckInRepositoryForToday(),
-  ) = TodayViewModel(authRepository, challengeRepository, habitRepository, checkInRepository, fixedClock)
+    userRepository: UserRepository = FakeUserRepositoryForToday(mapOf("user-2" to witness)),
+    interactionRepository: InteractionRepository = FakeInteractionRepositoryForToday(),
+  ) = TodayViewModel(
+    authRepository,
+    challengeRepository,
+    habitRepository,
+    checkInRepository,
+    userRepository,
+    interactionRepository,
+    fixedClock,
+  )
 
   @Test
   fun `no active challenge yields the empty state`() = runTest {
@@ -164,5 +202,74 @@ class TodayViewModelTest {
 
     assertEquals(listOf("habit-1", "challenge-1", 5L, false), checkInRepository.setCheckInCalls.last())
     assertFalse(vm.uiState.value.habits.first { it.habitId == "habit-1" }.checkedToday)
+  }
+
+  @Test
+  fun `witness status reads waiting when nothing is checked yet`() = runTest {
+    val vm = viewModel()
+
+    assertEquals("Priya is watching · waiting", vm.uiState.value.witnessStatusText)
+  }
+
+  @Test
+  fun `witness status reads watching you finish once some but not all habits are checked`() = runTest {
+    val checkInRepository = FakeCheckInRepositoryForToday()
+    val vm = viewModel(checkInRepository = checkInRepository)
+
+    vm.toggleHabit("habit-1")
+
+    assertEquals("Priya is watching · watching you finish", vm.uiState.value.witnessStatusText)
+  }
+
+  @Test
+  fun `witness status reads saw all once every habit is checked`() = runTest {
+    val checkInRepository = FakeCheckInRepositoryForToday()
+    val vm = viewModel(checkInRepository = checkInRepository)
+
+    vm.toggleHabit("habit-1")
+    vm.toggleHabit("habit-2")
+
+    assertEquals("Priya is watching · saw all 2", vm.uiState.value.witnessStatusText)
+  }
+
+  @Test
+  fun `a cheer sent today surfaces as the cheer message`() = runTest {
+    val interactions =
+      FakeInteractionRepositoryForToday(
+        listOf(
+          InteractionEntity("i1", "challenge-1", "user-2", "cheer", date = 5L, message = "Nice work!", createdAt = 0L)
+        )
+      )
+    val vm = viewModel(interactionRepository = interactions)
+
+    assertEquals("Nice work!", vm.uiState.value.cheerMessage)
+  }
+
+  @Test
+  fun `a cheer from a previous day does not surface`() = runTest {
+    val interactions =
+      FakeInteractionRepositoryForToday(
+        listOf(
+          InteractionEntity("i1", "challenge-1", "user-2", "cheer", date = 4L, message = "Yesterday's cheer", createdAt = 0L)
+        )
+      )
+    val vm = viewModel(interactionRepository = interactions)
+
+    assertNull(vm.uiState.value.cheerMessage)
+  }
+
+  @Test
+  fun `a nudge sent today surfaces as the nudge message until dismissed`() = runTest {
+    val interactions =
+      FakeInteractionRepositoryForToday(
+        listOf(InteractionEntity("i1", "challenge-1", "user-2", "nudge", date = 5L, message = "Don't forget!", createdAt = 0L))
+      )
+    val vm = viewModel(interactionRepository = interactions)
+
+    assertEquals("Don't forget!", vm.uiState.value.nudgeMessage)
+
+    vm.dismissNudge()
+
+    assertNull(vm.uiState.value.nudgeMessage)
   }
 }
