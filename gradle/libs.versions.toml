@@ -20,6 +20,7 @@ firebaseCrashlyticsPlugin = "3.0.8"
 firebaseBom = "34.18.0"
 ksp = "2.3.11"
 catalystAndroidSdk = "3.0.1"
+room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -49,6 +50,10 @@ androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-com
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 catalyst-android-sdk = { module = "com.zoho.catalyst:android-sdk", version.ref = "catalystAndroidSdk" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
