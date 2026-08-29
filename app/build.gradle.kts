@@ -74,6 +74,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+ksp {
+  arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
@@ -124,4 +128,10 @@ dependencies {
 
   // Backend (Zoho Catalyst)
   implementation(libs.catalyst.android.sdk)
+
+  // Local persistence (offline cache + sync queue, see docs/TECH_STACK.md §5)
+  implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.room.ktx)
+  ksp(libs.androidx.room.compiler)
+  testImplementation(libs.androidx.room.testing)
 }
