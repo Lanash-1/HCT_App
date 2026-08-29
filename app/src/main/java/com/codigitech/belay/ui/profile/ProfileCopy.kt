@@ -18,6 +18,14 @@ object ProfileCopy {
   const val GRACE_DAYS_LEFT_LABEL = "Grace days left"
   const val NO_REMINDER_SET = "Not set"
   const val NO_ACTIVE_CHALLENGE = "—"
+  const val ACCOUNT_LABEL = "Account"
+  const val EXPORT_DATA_LABEL = "Export my data"
+  const val DELETE_ACCOUNT_LABEL = "Delete account"
+  const val DELETE_CONFIRM_TITLE = "Delete your account?"
+  const val DELETE_CONFIRM_BODY =
+    "This removes your account, your challenges, habits, and check-ins, and your pairing relationships. If you're someone's witness, your identity is removed from their challenge too. This can't be undone."
+  const val DELETE_CONFIRM_ACTION = "Delete everything"
+  const val DELETE_CANCEL = "Cancel"
   const val SWITCH_NOTE = "Switching modes never deletes a challenge — it just changes what this phone shows."
   const val CHALLENGER_MODE_EXPLAINER =
     "Challenger mode shows your own stack of habits and hides the people you watch. Your witness still sees everything you log."

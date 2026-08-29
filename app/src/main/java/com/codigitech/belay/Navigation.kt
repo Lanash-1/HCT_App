@@ -59,6 +59,10 @@ fun MainNavigation() {
           MainTabsScreen(
             mode = sessionState.mode,
             onOpenWitnessDetail = { challengeId -> backStack.add(WitnessDetail(challengeId)) },
+            onSignedOut = {
+              backStack.clear()
+              backStack.add(Auth)
+            },
             modifier = Modifier.safeDrawingPadding(),
           )
         }

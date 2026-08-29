@@ -1,5 +1,6 @@
 package com.codigitech.belay.ui.auth
 
+import com.codigitech.belay.data.repository.AccountDeletionResult
 import com.codigitech.belay.data.repository.AuthOutcome
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.domain.auth.SignupValidationError
@@ -8,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -27,10 +29,12 @@ private class FakeAuthRepository(
 
   override fun currentUserEmail(): String? = currentUserEmail
 
-  override fun logOut() {
+  override suspend fun logOut() {
     loggedOut = true
     currentUserId = null
   }
+
+  override suspend fun deleteAccount(): AccountDeletionResult = error("not used")
 }
 
 class AuthViewModelTest {
@@ -98,6 +102,17 @@ class AuthViewModelTest {
     viewModel.submit(AuthMode.LogIn)
 
     assertEquals("The password is invalid.", viewModel.uiState.value.errorMessage)
+    assertNull(viewModel.uiState.value.signedInUserId)
+  }
+
+  @Test
+  fun `logOut signs out of the repository and resets to a blank signed-out state`() = runTest {
+    val authRepository = FakeAuthRepository(currentUserId = "uid-existing")
+    val viewModel = AuthViewModel(authRepository)
+
+    viewModel.logOut()
+
+    assertTrue(authRepository.loggedOut)
     assertNull(viewModel.uiState.value.signedInUserId)
   }
 }

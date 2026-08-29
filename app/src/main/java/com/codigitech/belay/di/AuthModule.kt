@@ -3,6 +3,7 @@ package com.codigitech.belay.di
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.FirebaseAuthRepositoryImpl
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.functions.FirebaseFunctions
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -17,5 +18,7 @@ abstract class AuthModule {
 
   companion object {
     @Provides @Singleton fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides @Singleton fun provideFirebaseFunctions(): FirebaseFunctions = FirebaseFunctions.getInstance()
   }
 }

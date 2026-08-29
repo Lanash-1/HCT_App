@@ -7,12 +7,14 @@
 
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 
 const { evaluateDayRollover } = require('./lib/evaluateDayRollover');
 const { buildWeeklyRecap } = require('./lib/buildWeeklyRecap');
 const { validateMessage } = require('./lib/validateMessage');
+const { classifyChallengeForDeletion } = require('./lib/classifyChallengeForDeletion');
 
 initializeApp();
 
@@ -184,4 +186,67 @@ exports.cheerNudge = onCall(async (request) => {
   });
 
   return { status: 'success', interactionId: docRef.id };
+});
+
+/**
+ * Callable function invoked by the Android client to delete an account and its data
+ * (PRD §6.3, docs/PRIVACY_POLICY.md "Data retention & deletion") — non-negotiable for Play
+ * Store release. Runs with admin Firestore access so it isn't bound by what a regular signed-in
+ * user's security rules would allow (e.g. deleting someone else's challenge is never allowed
+ * directly, but is required here when that challenge is the requester's own).
+ */
+exports.deleteAccount = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be signed in.');
+  }
+  const userId = request.auth.uid;
+  const db = getFirestore();
+
+  const [asChallenger, asWitness] = await Promise.all([
+    db.collection('challenges').where('challenger_user_id', '==', userId).get(),
+    db.collection('challenges').where('witness_user_id', '==', userId).get(),
+  ]);
+
+  const batch = db.batch();
+
+  for (const challengeDoc of [...asChallenger.docs, ...asWitness.docs]) {
+    const action = classifyChallengeForDeletion(challengeDoc.data(), userId);
+    if (action === 'clear_witness') {
+      batch.update(challengeDoc.ref, { witness_user_id: null });
+      continue;
+    }
+    if (action !== 'cascade_delete') continue;
+
+    const challengeId = challengeDoc.id;
+    const [habits, checkIns, interactions, recaps] = await Promise.all([
+      db.collection('habits').where('challenge_id', '==', challengeId).get(),
+      db.collection('check_ins').where('challenge_id', '==', challengeId).get(),
+      db.collection('interactions').where('challenge_id', '==', challengeId).get(),
+      db.collection('recaps').where('challenge_id', '==', challengeId).get(),
+    ]);
+    for (const doc of [...habits.docs, ...checkIns.docs, ...interactions.docs, ...recaps.docs]) {
+      batch.delete(doc.ref);
+    }
+    batch.delete(challengeDoc.ref);
+  }
+
+  const pairings = await db
+    .collection('pairings')
+    .where('from_user_id', '==', userId)
+    .get()
+    .then((snap) => snap.docs)
+    .then(async (fromDocs) => {
+      const toSnap = await db.collection('pairings').where('to_user_id', '==', userId).get();
+      return [...fromDocs, ...toSnap.docs];
+    });
+  for (const doc of pairings) {
+    batch.delete(doc.ref);
+  }
+
+  batch.delete(db.collection('users').doc(userId));
+
+  await batch.commit();
+  await getAuth().deleteUser(userId);
+
+  return { status: 'success' };
 });
