@@ -68,19 +68,21 @@ This is a Firestore schema — each "table" below is a top-level collection, fla
 | `created_at` | datetime | |
 
 ### `interactions`
-Cheer/nudge events — also doubles as the "Log" list shown on the witness detail screen.
+Cheer/nudge events.
 
 | Field | Type | Notes |
 |---|---|---|
 | `interaction_id` | string | primary key |
 | `challenge_id` | string | FK → `challenges` |
 | `from_user_id` | string | witness (cheer/nudge) or challenger (implicit, via check-in) |
-| `type` | enum(`cheer`,`nudge`,`checkin_summary`) | |
+| `type` | enum(`cheer`,`nudge`,`checkin_summary`) | `checkin_summary` is reserved but unused — no Cloud Function writes it yet (see note below) |
 | `date` | date | |
 | `message` | string | witness-typed free text (max ~140 chars), not preset/tone-resolved copy — see [TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages) |
 | `created_at` | datetime | |
 
 Nudge is rate-limited to 1/day per challenge — enforced in the `cheerNudge` Cloud Function (a callable function, using `context.auth` for identity) that writes this collection, not just client-side.
+
+The witness-detail "Log" (PRD §5.7) turned out **not** to need this collection: it's built client-side by grouping the challenge's raw `check_ins` by date (a per-day done/total tally + a "perfect/partial/nothing" label), which isn't a scored/derived field in the sense §Notes-for-implementation means — no streak, grace, or perfect-day math, just a group-by over already-synced rows. `checkin_summary` was speculative scope from the original draft; leave it reserved rather than building the Cloud Function for it unless a real need shows up (e.g. the log needing to survive before the client has ever synced those check-ins).
 
 ### `recaps`
 Generated weekly by a scheduled Cloud Function (Sunday), matching the shareable recap screen.

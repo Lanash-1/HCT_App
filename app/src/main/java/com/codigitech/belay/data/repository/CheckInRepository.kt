@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 interface CheckInRepository {
   fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>>
 
+  /** All check-ins for a challenge across its whole run — the raw data behind the witness-detail activity log. */
+  fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>>
+
   /** Toggles a habit's check-in for a given day (PRD §5.3 Today screen). */
   suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean): CheckInEntity
 }
@@ -26,6 +29,8 @@ constructor(
 
   override fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>> =
     checkInDao.observeForChallengeAndDate(challengeId, date)
+
+  override fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>> = checkInDao.observeForChallenge(challengeId)
 
   override suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean): CheckInEntity {
     val existing = checkInDao.get(habitId, date)

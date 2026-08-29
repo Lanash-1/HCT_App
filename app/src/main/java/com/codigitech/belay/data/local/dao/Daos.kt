@@ -59,6 +59,9 @@ interface CheckInDao {
   @Query("SELECT * FROM check_ins WHERE challengeId = :challengeId AND date = :date")
   fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>>
 
+  @Query("SELECT * FROM check_ins WHERE challengeId = :challengeId ORDER BY date DESC")
+  fun observeForChallenge(challengeId: String): Flow<List<CheckInEntity>>
+
   @Query("SELECT * FROM check_ins WHERE habitId = :habitId ORDER BY date DESC")
   fun observeForHabit(habitId: String): Flow<List<CheckInEntity>>
 
