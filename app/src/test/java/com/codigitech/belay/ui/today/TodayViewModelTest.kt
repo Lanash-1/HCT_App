@@ -1,0 +1,168 @@
+package com.codigitech.belay.ui.today
+
+import com.codigitech.belay.core.BelayClock
+import com.codigitech.belay.data.local.entity.ChallengeEntity
+import com.codigitech.belay.data.local.entity.CheckInEntity
+import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.repository.AuthOutcome
+import com.codigitech.belay.data.repository.AuthRepository
+import com.codigitech.belay.data.repository.ChallengeRepository
+import com.codigitech.belay.data.repository.CheckInRepository
+import com.codigitech.belay.data.repository.HabitRepository
+import com.codigitech.belay.testutil.MainDispatcherRule
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+private const val ONE_DAY_MILLIS = 86_400_000L
+
+private class FakeAuthRepositoryForToday(private val userId: String? = "user-1") : AuthRepository {
+  override suspend fun signUp(email: String, password: String): AuthOutcome = AuthOutcome.Success("unused")
+
+  override suspend fun logIn(email: String, password: String): AuthOutcome = AuthOutcome.Success("unused")
+
+  override fun currentUserId(): String? = userId
+
+  override fun currentUserEmail(): String? = "arun@example.com"
+
+  override fun logOut() = Unit
+}
+
+private class FakeChallengeRepositoryForToday(private val challenge: ChallengeEntity?) : ChallengeRepository {
+  override suspend fun createChallenge(
+    challengerUserId: String,
+    witnessUserId: String,
+    title: String,
+    habits: List<com.codigitech.belay.data.repository.HabitSpec>,
+    durationDays: Int,
+    graceDaysTotal: Int,
+  ) = error("not used")
+
+  override fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?> = MutableStateFlow(challenge)
+
+  override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = MutableStateFlow(emptyList())
+}
+
+private class FakeHabitRepositoryForToday(private val habits: List<HabitEntity>) : HabitRepository {
+  override fun observeForChallenge(challengeId: String): Flow<List<HabitEntity>> = MutableStateFlow(habits)
+
+  override suspend fun updateStreak(habit: HabitEntity, newStreak: Int) = error("not used")
+}
+
+private class FakeCheckInRepositoryForToday(initial: List<CheckInEntity> = emptyList()) : CheckInRepository {
+  private val state = MutableStateFlow(initial)
+  val setCheckInCalls = mutableListOf<List<Any?>>()
+
+  override fun observeForChallengeAndDate(challengeId: String, date: Long): Flow<List<CheckInEntity>> = state
+
+  override suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean): CheckInEntity {
+    setCheckInCalls += listOf(habitId, challengeId, date, done)
+    val entity =
+      CheckInEntity(
+        checkInId = "check-$habitId",
+        habitId = habitId,
+        challengeId = challengeId,
+        date = date,
+        done = done,
+        checkedAt = if (done) 0L else null,
+        clientIdempotencyKey = "check-$habitId",
+      )
+    state.value = state.value.filterNot { it.habitId == habitId } + entity
+    return entity
+  }
+}
+
+class TodayViewModelTest {
+
+  @get:Rule val mainDispatcherRule = MainDispatcherRule()
+
+  private val fixedClock = BelayClock { 5 * ONE_DAY_MILLIS } // epoch day 5
+
+  private val activeChallenge =
+    ChallengeEntity(
+      challengeId = "challenge-1",
+      challengerUserId = "user-1",
+      witnessUserId = "user-2",
+      title = "Morning reset",
+      durationDays = 21,
+      graceDaysTotal = 2,
+      graceDaysUsed = 1,
+      perfectDays = 3,
+      startDate = 2L, // epoch day 2, so day 5 is the 4th day in
+      status = "active",
+    )
+
+  private val habits =
+    listOf(
+      HabitEntity("habit-1", "challenge-1", "Run 3km", "before 8am", null, null, 0, currentStreak = 4),
+      HabitEntity("habit-2", "challenge-1", "Read", null, null, null, 1, currentStreak = 2),
+    )
+
+  private fun viewModel(
+    authRepository: AuthRepository = FakeAuthRepositoryForToday(),
+    challengeRepository: ChallengeRepository = FakeChallengeRepositoryForToday(activeChallenge),
+    habitRepository: HabitRepository = FakeHabitRepositoryForToday(habits),
+    checkInRepository: CheckInRepository = FakeCheckInRepositoryForToday(),
+  ) = TodayViewModel(authRepository, challengeRepository, habitRepository, checkInRepository, fixedClock)
+
+  @Test
+  fun `no active challenge yields the empty state`() = runTest {
+    val vm = viewModel(challengeRepository = FakeChallengeRepositoryForToday(null))
+
+    assertFalse(vm.uiState.value.hasActiveChallenge)
+    assertFalse(vm.uiState.value.isLoading)
+    assertTrue(vm.uiState.value.habits.isEmpty())
+  }
+
+  @Test
+  fun `active challenge with no check-ins yet surfaces habits unchecked and correct summary numbers`() = runTest {
+    val vm = viewModel()
+
+    val state = vm.uiState.value
+    assertTrue(state.hasActiveChallenge)
+    assertEquals("Morning reset", state.challengeTitle)
+    assertEquals(
+      listOf(
+        TodayHabitUiState("habit-1", "Run 3km", "before 8am", streak = 4, checkedToday = false),
+        TodayHabitUiState("habit-2", "Read", null, streak = 2, checkedToday = false),
+      ),
+      state.habits,
+    )
+    assertEquals(0f, state.progressFraction, 0.001f)
+    assertEquals(3, state.perfectDays)
+    assertEquals(1, state.graceDaysLeft) // 2 total - 1 used
+    assertEquals(18, state.daysToGo) // 21 duration - (day 5 - day 2)
+  }
+
+  @Test
+  fun `toggling an unchecked habit checks it and updates progress`() = runTest {
+    val checkInRepository = FakeCheckInRepositoryForToday()
+    val vm = viewModel(checkInRepository = checkInRepository)
+
+    vm.toggleHabit("habit-1")
+
+    assertEquals(listOf("habit-1", "challenge-1", 5L, true), checkInRepository.setCheckInCalls.last())
+    val habitState = vm.uiState.value.habits.first { it.habitId == "habit-1" }
+    assertTrue(habitState.checkedToday)
+    assertEquals(0.5f, vm.uiState.value.progressFraction, 0.001f)
+  }
+
+  @Test
+  fun `toggling an already-checked habit unchecks it`() = runTest {
+    val checkInRepository =
+      FakeCheckInRepositoryForToday(
+        initial = listOf(CheckInEntity("check-habit-1", "habit-1", "challenge-1", 5L, done = true, checkedAt = 0L, clientIdempotencyKey = "check-habit-1"))
+      )
+    val vm = viewModel(checkInRepository = checkInRepository)
+
+    vm.toggleHabit("habit-1")
+
+    assertEquals(listOf("habit-1", "challenge-1", 5L, false), checkInRepository.setCheckInCalls.last())
+    assertFalse(vm.uiState.value.habits.first { it.habitId == "habit-1" }.checkedToday)
+  }
+}

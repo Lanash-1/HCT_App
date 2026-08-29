@@ -6,12 +6,16 @@ import com.codigitech.belay.core.SystemBelayClock
 import com.codigitech.belay.core.UuidIdGenerator
 import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.ChallengeRepositoryImpl
+import com.codigitech.belay.data.repository.CheckInRepository
+import com.codigitech.belay.data.repository.CheckInRepositoryImpl
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.HabitRepositoryImpl
 import com.codigitech.belay.data.repository.InteractionRepository
 import com.codigitech.belay.data.repository.InteractionRepositoryImpl
 import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.CheckInRemoteDataSource
 import com.codigitech.belay.data.remote.FirestoreChallengeRemoteDataSource
+import com.codigitech.belay.data.remote.FirestoreCheckInRemoteDataSource
 import com.codigitech.belay.data.remote.FirestoreHabitRemoteDataSource
 import com.codigitech.belay.data.remote.FirestorePairingRemoteDataSource
 import com.codigitech.belay.data.remote.FirestoreUserRemoteDataSource
@@ -55,6 +59,10 @@ abstract class RepositoryModule {
   @Binds abstract fun bindHabitRemoteDataSource(impl: FirestoreHabitRemoteDataSource): HabitRemoteDataSource
 
   @Binds abstract fun bindRecapRepository(impl: RecapRepositoryImpl): RecapRepository
+
+  @Binds abstract fun bindCheckInRepository(impl: CheckInRepositoryImpl): CheckInRepository
+
+  @Binds abstract fun bindCheckInRemoteDataSource(impl: FirestoreCheckInRemoteDataSource): CheckInRemoteDataSource
 
   @Binds abstract fun bindClock(impl: SystemBelayClock): BelayClock
 
