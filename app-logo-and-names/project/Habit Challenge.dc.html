@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EDE9E0;font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1F3D2B}a:hover{color:#2F5C41}
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes ringPulse{0%{transform:scale(1)}45%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+:root,[data-theme="light"]{--bg:#FAF8F3;--surface:#F1EEE6;--surface2:#EFEBE1;--line:#E7E3D8;--track:#E4E0D5;--ink:#191C19;--ink1:#3C463D;--ink2:#4E5A50;--ink3:#7A8A7C;--brand:#1F3D2B;--brandInk:#1F3D2B;--onBrand:#fff;--brandSoft:#E4EADF;--tabPill:#C9E3CE;--outline:#B6C2B7;--dashed:#C0C8BF;--dim:#8A968B;--dotIdle:#D6D2C6;--dotMiss:#B9B2A2;--chip:#E1DCD1;--warn:#F5E9D9;--warnInk:#8A6A3E;--warnLabel:#9A7B4F;--warnSub:#5A5145;--toast:#32302C;--toastInk:#F3F0E9;--toastAction:#CDE7D3;--live:#3E8E5A;--onAccent:#1F3D2B;--knob:#FAF8F3}
+[data-theme="dark"]{--bg:#12150F;--surface:#1C201A;--surface2:#232821;--line:#2B3129;--track:#2B3129;--ink:#EEF2EA;--ink1:#D8DFD6;--ink2:#A5B0A4;--ink3:#7E8A7E;--brand:#35624A;--brandInk:#9DD3B0;--onBrand:#F2F7F1;--brandSoft:#22372A;--tabPill:#2C4A37;--outline:#4A5648;--dashed:#3B4238;--dim:#6F7B6E;--dotIdle:#333930;--dotMiss:#4A5145;--chip:#262C24;--warn:#3A2C1A;--warnInk:#E9BE85;--warnLabel:#C79A62;--warnSub:#C6BAA6;--toast:#EDEAE2;--toastInk:#22261F;--toastAction:#1F3D2B;--live:#5FBF84;--onAccent:#14170F;--knob:#8A968B}
+</style></helmet>
+
+<section style="padding:56px 64px 24px;display:flex;flex-direction:column;gap:28px;min-width:1800px;box-sizing:border-box">
+<div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:8px;max-width:520px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7A8A7C">Turn 2 · Identity</div>
+<h2 style="margin:0;font:600 34px/1.06 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#191C19">Three marks, ten names.</h2>
+<p style="margin:0;font:400 14.5px/1.55 'DM Sans',sans-serif;color:#4E5A50;text-wrap:pretty">Every mark is two elements — one active, one watching — because that asymmetry is the whole product. Pick a mark and a name and I'll build the pairing out properly.</p>
+</div>
+</div>
+
+<div style="display:flex;gap:20px;align-items:stretch;flex-wrap:wrap">
+
+<div id="2a" style="width:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;padding:24px;background:#F7F4ED;border:1px solid #DDD8CB;border-radius:22px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="padding:4px 9px;border-radius:100px;background:#1F3D2B;color:#EDE9E0;font:600 11px/1 'Space Grotesk',sans-serif;letter-spacing:.06em">2a</span>
+<span style="font:500 15px/1 'DM Sans',sans-serif;color:#191C19">The Watched Day</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;height:180px;background:#EDE9E0;border-radius:16px">
+<svg width="132" height="132" viewBox="0 0 132 132" aria-label="Watched Day mark">
+<circle cx="66" cy="66" r="50" fill="none" stroke="#1F3D2B" stroke-width="13" stroke-linecap="round" stroke-dasharray="235 79" transform="rotate(-100 66 66)"></circle>
+<circle cx="66" cy="66" r="19" fill="{{ accent }}"></circle>
+</svg>
+</div>
+<p style="margin:0;font:400 13.5px/1.5 'DM Sans',sans-serif;color:#4E5A50">The progress ring you already tap every morning, with the witness sitting in the middle of it. Open at the top — the day isn't closed yet. Reads as an eye at 20px without ever drawing an eye.</p>
+<div style="display:flex;align-items:center;gap:14px;padding:14px;background:#EDE9E0;border-radius:14px">
+<div style="width:56px;height:56px;border-radius:17px;background:#1F3D2B;display:flex;align-items:center;justify-content:center">
+<svg width="34" height="34" viewBox="0 0 132 132"><circle cx="66" cy="66" r="50" fill="none" stroke="#EDE9E0" stroke-width="15" stroke-linecap="round" stroke-dasharray="235 79" transform="rotate(-100 66 66)"></circle><circle cx="66" cy="66" r="19" fill="{{ accent }}"></circle></svg>
+</div>
+<svg width="28" height="28" viewBox="0 0 132 132"><circle cx="66" cy="66" r="50" fill="none" stroke="#1F3D2B" stroke-width="17" stroke-linecap="round" stroke-dasharray="235 79" transform="rotate(-100 66 66)"></circle><circle cx="66" cy="66" r="21" fill="#1F3D2B"></circle></svg>
+<svg width="20" height="20" viewBox="0 0 132 132"><circle cx="66" cy="66" r="50" fill="none" stroke="#1F3D2B" stroke-width="19" stroke-linecap="round" stroke-dasharray="235 79" transform="rotate(-100 66 66)"></circle><circle cx="66" cy="66" r="23" fill="#1F3D2B"></circle></svg>
+<div style="font:400 11.5px/1.4 'DM Sans',sans-serif;color:#7A8A7C">icon · 28 · 20<br>mono holds up</div>
+</div>
+<div style="display:flex;align-items:center;gap:11px;padding:16px 18px;background:#1F3D2B;border-radius:14px">
+<svg width="32" height="32" viewBox="0 0 132 132"><circle cx="66" cy="66" r="50" fill="none" stroke="#EDE9E0" stroke-width="15" stroke-linecap="round" stroke-dasharray="235 79" transform="rotate(-100 66 66)"></circle><circle cx="66" cy="66" r="19" fill="{{ accent }}"></circle></svg>
+<span style="font:600 26px/1 'Space Grotesk',sans-serif;letter-spacing:-.03em;color:#F7F4ED">Belay</span>
+</div>
+</div>
+
+<div id="2b" style="width:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;padding:24px;background:#F7F4ED;border:1px solid #DDD8CB;border-radius:22px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="padding:4px 9px;border-radius:100px;background:#1F3D2B;color:#EDE9E0;font:600 11px/1 'Space Grotesk',sans-serif;letter-spacing:.06em">2b</span>
+<span style="font:500 15px/1 'DM Sans',sans-serif;color:#191C19">Two Up</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;height:180px;background:#EDE9E0;border-radius:16px">
+<svg width="150" height="112" viewBox="0 0 150 112" aria-label="Two Up mark">
+<rect x="6" y="6" width="88" height="100" rx="26" fill="#1F3D2B"></rect>
+<circle cx="106" cy="66" r="40" fill="{{ accent }}" style="mix-blend-mode:multiply"></circle>
+</svg>
+</div>
+<p style="margin:0;font:400 13.5px/1.5 'DM Sans',sans-serif;color:#4E5A50">Two shapes that don't match, overlapping. The tall one is doing the work; the round one is holding position. The overlap is the only place they meet — the daily check-in.</p>
+<div style="display:flex;align-items:center;gap:14px;padding:14px;background:#EDE9E0;border-radius:14px">
+<div style="width:56px;height:56px;border-radius:17px;background:#1F3D2B;display:flex;align-items:center;justify-content:center">
+<svg width="38" height="30" viewBox="0 0 150 112"><rect x="6" y="6" width="88" height="100" rx="26" fill="#EDE9E0"></rect><circle cx="106" cy="66" r="40" fill="{{ accent }}" style="mix-blend-mode:multiply"></circle></svg>
+</div>
+<svg width="32" height="24" viewBox="0 0 150 112"><rect x="6" y="6" width="88" height="100" rx="26" fill="#1F3D2B"></rect><circle cx="110" cy="66" r="34" fill="none" stroke="#1F3D2B" stroke-width="16"></circle></svg>
+<svg width="24" height="18" viewBox="0 0 150 112"><rect x="6" y="6" width="88" height="100" rx="26" fill="#1F3D2B"></rect><circle cx="112" cy="66" r="32" fill="none" stroke="#1F3D2B" stroke-width="18"></circle></svg>
+<div style="font:400 11.5px/1.4 'DM Sans',sans-serif;color:#7A8A7C">icon · 32 · 24<br>widest of the three</div>
+</div>
+<div style="display:flex;align-items:center;gap:11px;padding:16px 18px;background:#1F3D2B;border-radius:14px">
+<svg width="40" height="30" viewBox="0 0 150 112"><rect x="6" y="6" width="88" height="100" rx="26" fill="#EDE9E0"></rect><circle cx="106" cy="66" r="40" fill="{{ accent }}" style="mix-blend-mode:multiply"></circle></svg>
+<span style="font:600 26px/1 'Space Grotesk',sans-serif;letter-spacing:-.03em;color:#F7F4ED">Vouch</span>
+</div>
+</div>
+
+<div id="2c" style="width:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;padding:24px;background:#F7F4ED;border:1px solid #DDD8CB;border-radius:22px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="padding:4px 9px;border-radius:100px;background:#1F3D2B;color:#EDE9E0;font:600 11px/1 'Space Grotesk',sans-serif;letter-spacing:.06em">2c</span>
+<span style="font:500 15px/1 'DM Sans',sans-serif;color:#191C19">The Second</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;height:180px;background:#EDE9E0;border-radius:16px">
+<svg width="150" height="132" viewBox="0 0 150 132" aria-label="The Second mark">
+<circle cx="52" cy="66" r="46" fill="#1F3D2B"></circle>
+<circle cx="112" cy="66" r="24" fill="none" stroke="#1F3D2B" stroke-width="11"></circle>
+<circle cx="112" cy="66" r="7" fill="{{ accent }}"></circle>
+</svg>
+</div>
+<p style="margin:0;font:400 13.5px/1.5 'DM Sans',sans-serif;color:#4E5A50">A solid disc and a smaller open one beside it, half a step behind. Hierarchy is explicit: one person is the challenge, the other is the second in their corner. Cleanest at tiny sizes.</p>
+<div style="display:flex;align-items:center;gap:14px;padding:14px;background:#EDE9E0;border-radius:14px">
+<div style="width:56px;height:56px;border-radius:17px;background:#1F3D2B;display:flex;align-items:center;justify-content:center">
+<svg width="38" height="34" viewBox="0 0 150 132"><circle cx="52" cy="66" r="46" fill="#EDE9E0"></circle><circle cx="112" cy="66" r="24" fill="none" stroke="#EDE9E0" stroke-width="11"></circle><circle cx="112" cy="66" r="7" fill="{{ accent }}"></circle></svg>
+</div>
+<svg width="30" height="26" viewBox="0 0 150 132"><circle cx="52" cy="66" r="46" fill="#1F3D2B"></circle><circle cx="112" cy="66" r="24" fill="none" stroke="#1F3D2B" stroke-width="13"></circle></svg>
+<svg width="22" height="19" viewBox="0 0 150 132"><circle cx="52" cy="66" r="46" fill="#1F3D2B"></circle><circle cx="112" cy="66" r="24" fill="none" stroke="#1F3D2B" stroke-width="15"></circle></svg>
+<div style="font:400 11.5px/1.4 'DM Sans',sans-serif;color:#7A8A7C">icon · 30 · 22<br>survives 16px</div>
+</div>
+<div style="display:flex;align-items:center;gap:11px;padding:16px 18px;background:#1F3D2B;border-radius:14px">
+<svg width="38" height="34" viewBox="0 0 150 132"><circle cx="52" cy="66" r="46" fill="#EDE9E0"></circle><circle cx="112" cy="66" r="24" fill="none" stroke="#EDE9E0" stroke-width="11"></circle><circle cx="112" cy="66" r="7" fill="{{ accent }}"></circle></svg>
+<span style="font:600 26px/1 'Space Grotesk',sans-serif;letter-spacing:-.03em;color:#F7F4ED">Second</span>
+</div>
+</div>
+
+<div id="2d" style="width:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;padding:24px;background:#1F3D2B;border-radius:22px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="padding:4px 9px;border-radius:100px;background:#EDE9E0;color:#1F3D2B;font:600 11px/1 'Space Grotesk',sans-serif;letter-spacing:.06em">2d</span>
+<span style="font:500 15px/1 'DM Sans',sans-serif;color:#F7F4ED">Names, best first</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;flex-direction:column;gap:3px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.14)">
+<div style="font:600 22px/1 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#FFB86B">Belay</div>
+<div style="font:400 13px/1.45 'DM Sans',sans-serif;color:#C9D8CC">Climbing: one climbs, one holds the rope and never leaves the ground. The exact asymmetry, already a real word people trust.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:3px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.14)">
+<div style="font:600 22px/1 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#FFB86B">Vouch</div>
+<div style="font:400 13px/1.45 'DM Sans',sans-serif;color:#C9D8CC">A verb you can use in the product — "Priya vouched for your week." Short, warm, no fitness baggage.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:3px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.14)">
+<div style="font:600 22px/1 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#FFB86B">Second</div>
+<div style="font:400 13px/1.45 'DM Sans',sans-serif;color:#C9D8CC">The second in a duel — in your corner, not in the fight. Doubles as "one second a day." Hardest to search for.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px;font:400 13px/1.4 'DM Sans',sans-serif;color:#E8F0E8">
+<div><strong style="font-weight:600;color:#F7F4ED">Lookout</strong> — names the witness role literally, friendly and plain.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Keeper</strong> — keeper of the streak; warm, slightly soft.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Tandem</strong> — two people, one machine; risks implying both pedal.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Daylight</strong> — "do it in daylight." Mood over mechanic.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Attest</strong> — serious, ledger-like. Good if the tone gets stricter.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Onlook</strong> — invented, quiet, easy to own.</div>
+<div><strong style="font-weight:600;color:#F7F4ED">Witness</strong> — clearest of all, but crowded and a little grave.</div>
+</div>
+</div>
+<div style="margin-top:4px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14);font:400 12.5px/1.5 'DM Sans',sans-serif;color:#9FB8A6">The in-app "W" monogram only survives if the name starts with W. Any other pick, the mark replaces it.</div>
+</div>
+
+</div>
+</section>
+
+<div style="display:flex;gap:44px;padding:56px 64px 96px;align-items:flex-start;min-width:1500px">
+
+<div style="width:360px;flex:none;display:flex;flex-direction:column;gap:22px;padding-top:8px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7A8A7C">Android · Material 3</div>
+<h1 style="margin:0;font:600 40px/1.05 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:#191C19;text-wrap:balance">One does the work.<br>One does the watching.</h1>
+<p style="margin:0;font:400 15px/1.55 'DM Sans',sans-serif;color:#4E5A50;text-wrap:pretty">The asymmetry is the product. A challenger commits to a short stack of daily habits; a witness — who is <em>not</em> competing — sees every check-in and every miss, and is the only person who can nudge. Accountability without a leaderboard.</p>
+
+<div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#F7F4ED;border:1px solid #DDD8CB;border-radius:20px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7A8A7C">Assumptions</div>
+<div style="display:flex;flex-direction:column;gap:9px;font:400 13.5px/1.5 'DM Sans',sans-serif;color:#3C463D">
+<div>A challenge holds several habits — capped at five, so the day stays winnable.</div>
+<div>The day counts as complete only when every habit is checked. Partial days are visible, not hidden.</div>
+<div>Streaks belong to each habit; perfect days belong to the challenge.</div>
+<div>Role is a mode, not an account. The same person can run a challenge and witness two others.</div>
+<div>A miss is visible to exactly one person — the witness — not a feed.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;padding:20px;background:#1F3D2B;border-radius:20px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9FB8A6">Screens</div>
+<div style="display:flex;flex-direction:column;gap:8px;font:400 13.5px/1.4 'DM Sans',sans-serif;color:#E8F0E8">
+<div>1 · Pairing &amp; role — onboarding</div>
+<div>2 · Create a challenge — multiple habits</div>
+<div>3 · Today — the daily stack</div>
+<div>4 · Weekly recap, shareable</div>
+<div>5 · Profile — switch challenger ⇄ witness</div>
+<div>6 · Watching — witness mode home</div>
+<div>7 · Witness detail — right-hand phone, live</div>
+</div>
+<div style="margin-top:6px;font:400 12.5px/1.5 'DM Sans',sans-serif;color:#9FB8A6">Both phones share one state. Check habits off on the left and the right updates; cheer or nudge on the right and the left responds.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;padding:18px 20px;background:#F7F4ED;border:1px dashed #C9C2B2;border-radius:20px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7A8A7C">Next steps</div>
+<div style="font:400 13px/1.5 'DM Sans',sans-serif;color:#4E5A50">Dark theme is in — Profile → Appearance flips both phones, and the tweak panel sets the default. Photo-proof capture, per-habit reminder times, and the streak-broken recovery moment are the remaining follow-ons.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px;flex:none">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="{{ leftBadgeStyle }}">{{ leftBadge }}</span>
+<span style="font:400 13px/1 'DM Sans',sans-serif;color:#6B776C">Interactive — tap through it</span>
+</div>
+
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ isDark }}" width="{{ w }}" height="{{ h }}" hint-size="412px,892px">
+
+<sc-if value="{{ isOnboard }}" hint-placeholder-val="{{ true }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);padding:0 24px 28px;box-sizing:border-box">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;padding-top:16px">
+<div style="width:56px;height:56px;border-radius:18px;background:var(--brand);display:flex;align-items:center;justify-content:center;font:600 24px/1 'Space Grotesk',sans-serif;color:#F5A3C7">W</div>
+<div>
+<h2 style="margin:0 0 12px;font:600 34px/1.08 'Space Grotesk',sans-serif;letter-spacing:-.02em;color:var(--ink)">Habits stick when someone's watching.</h2>
+<p style="margin:0;font:400 15px/1.5 'DM Sans',sans-serif;color:var(--ink2)">Start by choosing a role. You can be both later; it's a switch in your profile, not a second account.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div role="button" onClick="{{ pickDoer }}" style="{{ roleDoerStyle }}">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="font:500 17px/1.2 'DM Sans',sans-serif;color:var(--ink)">I'm taking the challenge</div>
+<div style="{{ roleDoerDot }}"></div>
+</div>
+<div style="margin-top:6px;font:400 13.5px/1.45 'DM Sans',sans-serif;color:var(--ink2)">Up to five habits a day, one person holding you to all of them.</div>
+</div>
+<div role="button" onClick="{{ pickWitness }}" style="{{ roleWitStyle }}">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="font:500 17px/1.2 'DM Sans',sans-serif;color:var(--ink)">I'm the witness</div>
+<div style="{{ roleWitDot }}"></div>
+</div>
+<div style="margin-top:6px;font:400 13.5px/1.45 'DM Sans',sans-serif;color:var(--ink2)">You watch a friend's stack. No streak of your own to protect.</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface2);border-radius:16px">
+<div style="font:400 13px/1.4 'DM Sans',sans-serif;color:var(--ink2);flex:1">Pair with a code</div>
+<div style="font:600 18px/1 'Space Grotesk',sans-serif;letter-spacing:.22em;color:var(--brandInk)">7K42</div>
+</div>
+</div>
+<button onClick="{{ continueFromOnboard }}" style="height:56px;border:0;border-radius:28px;background:var(--brand);color:var(--onBrand);font:500 16px/1 'DM Sans',sans-serif;cursor:pointer;flex:none;transition:transform .12s ease,filter .2s ease" style-hover="filter:brightness(1.15)" style-active="transform:scale(.98)">Continue</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCreate }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 8px 4px">
+<div role="button" onClick="{{ goToday }}" style="width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:400 22px/1 'DM Sans',sans-serif;color:var(--ink);cursor:pointer" style-hover="background:var(--surface2)">←</div>
+<div style="font:400 20px/1 'DM Sans',sans-serif;color:var(--ink)">Morning reset</div>
+</div>
+<div style="flex:1;overflow:auto;padding:12px 24px 24px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">The habits</div>
+<div style="font:400 12px/1 'DM Sans',sans-serif;color:var(--ink3)">{{ habitCount }} of 5</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ editHabits }}" as="h" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-radius:18px">
+<div style="{{ h.chipStyle }}">{{ h.icon }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:500 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">{{ h.name }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;color:var(--ink2)">{{ h.detail }}</div>
+</div>
+<div role="button" onClick="{{ h.remove }}" style="width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font:400 20px/1 'DM Sans',sans-serif;color:var(--ink3);cursor:pointer" style-hover="background:var(--track)">×</div>
+</div>
+</sc-for>
+</div>
+<div role="button" onClick="{{ addHabit }}" style="{{ addHabitStyle }}">+ &nbsp;Add a habit</div>
+<div style="margin:8px 0 0 4px;font:400 12px/1.4 'DM Sans',sans-serif;color:var(--ink2)">Be specific enough that {{ witnessName }} could tell whether you did it.</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:28px 0 12px">How long</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{ durations }}" as="d" hint-placeholder-count="4">
+<div role="button" onClick="{{ d.pick }}" style="{{ d.style }}">{{ d.label }}</div>
+</sc-for>
+</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:28px 0 12px">Who's watching</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ people }}" as="p" hint-placeholder-count="3">
+<div role="button" onClick="{{ p.pick }}" style="{{ p.style }}">
+<div style="{{ p.avatar }}">{{ p.initial }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:500 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">{{ p.name }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;color:var(--ink2)">{{ p.note }}</div>
+</div>
+<div style="{{ p.dot }}"></div>
+</div>
+</sc-for>
+</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:28px 0 12px">Grace days</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;background:var(--surface);border-radius:18px">
+<div style="flex:1">
+<div style="font:500 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">Imperfect days allowed</div>
+<div style="font:400 13px/1.4 'DM Sans',sans-serif;color:var(--ink2);margin-top:2px">Decide now, not at 11&nbsp;pm on day 14.</div>
+</div>
+<div style="display:flex;align-items:center;gap:6px">
+<div role="button" onClick="{{ graceDown }}" style="width:40px;height:40px;border-radius:20px;border:1px solid var(--outline);display:flex;align-items:center;justify-content:center;font:400 20px/1 'DM Sans',sans-serif;color:var(--brandInk);cursor:pointer" style-hover="background:var(--brandSoft)">−</div>
+<div style="width:28px;text-align:center;font:600 20px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ grace }}</div>
+<div role="button" onClick="{{ graceUp }}" style="width:40px;height:40px;border-radius:20px;border:1px solid var(--outline);display:flex;align-items:center;justify-content:center;font:400 20px/1 'DM Sans',sans-serif;color:var(--brandInk);cursor:pointer" style-hover="background:var(--brandSoft)">+</div>
+</div>
+</div>
+</div>
+<div style="padding:12px 24px 24px;background:var(--bg)">
+<button onClick="{{ goToday }}" style="width:100%;height:56px;border:0;border-radius:16px;background:var(--brand);color:var(--onBrand);font:500 16px/1 'DM Sans',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(31,61,43,.28);transition:transform .12s ease,filter .2s ease" style-hover="filter:brightness(1.15)" style-active="transform:scale(.99)">Save · {{ startSummary }}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isToday }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px">
+<div style="padding:0 8px">
+<div style="font:400 13px/1.2 'DM Sans',sans-serif;color:var(--ink2)">Morning reset</div>
+<div style="font:600 22px/1.2 'Space Grotesk',sans-serif;color:var(--ink);margin-top:2px">Day {{ dayNo }} of {{ totalDays }}</div>
+</div>
+<div role="button" onClick="{{ goProfile }}" style="width:44px;height:44px;border-radius:22px;background:var(--brand);color:#F5A3C7;display:flex;align-items:center;justify-content:center;font:500 15px/1 'DM Sans',sans-serif;cursor:pointer">A</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:8px 20px 16px">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--brandSoft);border-radius:100px;width:fit-content;font:400 13px/1.2 'DM Sans',sans-serif;color:var(--brandInk)">
+<span style="width:7px;height:7px;border-radius:4px;background:var(--live);display:inline-block"></span>{{ witnessName }} is watching · {{ witnessStatusShort }}
+</div>
+
+<div style="display:flex;align-items:center;gap:20px;padding:16px 4px 8px">
+<div style="{{ ringWrapStyle }}">
+<svg width="132" height="132" viewBox="0 0 132 132">
+<circle cx="66" cy="66" r="56" fill="none" stroke="var(--track)" stroke-width="13"></circle>
+<circle cx="66" cy="66" r="56" fill="none" stroke="{{ accent }}" stroke-width="13" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="{{ ringOffset }}" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1)"></circle>
+</svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+<div style="font:600 34px/1 'Space Grotesk',sans-serif;letter-spacing:-.03em;color:var(--ink)">{{ doneCount }}<span style="font-size:19px;color:var(--ink3)">/{{ habitCount }}</span></div>
+<div style="font:400 11.5px/1.2 'DM Sans',sans-serif;color:var(--ink2);margin-top:3px">today</div>
+</div>
+</div>
+<div style="flex:1;min-width:0">
+<div style="font:600 20px/1.2 'Space Grotesk',sans-serif;color:var(--ink)">{{ dayHeadline }}</div>
+<div style="margin-top:6px;font:400 13.5px/1.45 'DM Sans',sans-serif;color:var(--ink2)">{{ daySub }}</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+<sc-for list="{{ habits }}" as="h" hint-placeholder-count="3">
+<div role="button" onClick="{{ h.toggle }}" style="{{ h.cardStyle }}">
+<div style="{{ h.checkStyle }}">{{ h.tick }}</div>
+<div style="flex:1;min-width:0">
+<div style="{{ h.nameStyle }}">{{ h.name }}</div>
+<div style="font:400 13px/1.35 'DM Sans',sans-serif;color:var(--ink2);margin-top:3px">{{ h.sub }}</div>
+</div>
+<div style="text-align:right;flex:none">
+<div style="font:600 15px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ h.streak }}</div>
+<div style="font:400 11px/1.2 'DM Sans',sans-serif;color:var(--ink3);margin-top:3px">day streak</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div role="button" onClick="{{ goCreate }}" style="margin-top:10px;padding:13px;border:1px dashed var(--dashed);border-radius:16px;text-align:center;font:500 14px/1 'DM Sans',sans-serif;color:var(--brandInk);cursor:pointer;transition:background .2s" style-hover="background:var(--surface2)">+ &nbsp;Add or edit habits</div>
+
+<sc-if value="{{ cheered }}">
+<div style="margin-top:16px;display:flex;gap:12px;padding:14px 16px;background:var(--surface);border-radius:18px;animation:slideUp .35s ease both">
+<div style="width:36px;height:36px;border-radius:18px;background:var(--brand);color:#F5A3C7;display:flex;align-items:center;justify-content:center;font:500 14px/1 'DM Sans',sans-serif;flex:none">{{ witnessInitial }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:500 14px/1.3 'DM Sans',sans-serif;color:var(--ink)">{{ witnessName }}</div>
+<div style="font:400 14px/1.4 'DM Sans',sans-serif;color:var(--ink2);margin-top:2px">{{ cheerMsg }}</div>
+</div>
+</div>
+</sc-if>
+
+<div style="margin-top:16px;display:flex;gap:10px">
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ perfectDays }}</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">perfect days</div>
+</div>
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ grace }}</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">grace left</div>
+</div>
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ daysLeft }}</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">to go</div>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ nudged }}">
+<div style="margin:0 16px 8px;padding:14px 16px;background:var(--toast);border-radius:12px;display:flex;align-items:center;gap:12px;animation:slideUp .3s ease both">
+<div style="flex:1;font:400 14px/1.35 'DM Sans',sans-serif;color:var(--toastInk)">{{ nudgeMsg }}</div>
+<div role="button" onClick="{{ dismissNudge }}" style="font:500 14px/1 'DM Sans',sans-serif;color:var(--toastAction);cursor:pointer">Got it</div>
+</div>
+</sc-if>
+
+<div style="display:flex;padding:8px 6px 12px;background:var(--surface);border-top:1px solid var(--line)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<div role="button" onClick="{{ t.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer">
+<div style="{{ t.pill }}"><div style="{{ t.glyph }}"></div></div>
+<div style="{{ t.label }}">{{ t.name }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRecap }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 8px 0">
+<div role="button" onClick="{{ goToday }}" style="width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:400 22px/1 'DM Sans',sans-serif;color:var(--ink);cursor:pointer" style-hover="background:var(--surface2)">←</div>
+<div style="font:400 20px/1 'DM Sans',sans-serif;color:var(--ink)">Week 2 recap</div>
+</div>
+<div style="flex:1;overflow:auto;padding:12px 20px 20px">
+<div style="border-radius:28px;background:var(--brand);padding:24px 22px;color:var(--onBrand);position:relative;overflow:hidden">
+<div style="position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:90px;background:rgba(245,163,199,.10)"></div>
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9FB8A6">Jul 20 – Jul 26 · Morning reset</div>
+<div style="display:flex;align-items:flex-end;gap:10px;margin-top:16px">
+<div style="font:600 72px/.85 'Space Grotesk',sans-serif;letter-spacing:-.04em;color:{{ accent }}">18</div>
+<div style="font:400 17px/1.35 'DM Sans',sans-serif;color:#C9D8CC;padding-bottom:6px">of 21 check-ins<br>4 perfect days</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:24px">
+<sc-for list="{{ recapRows }}" as="r" hint-placeholder-count="3">
+<div>
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:500 13.5px/1.2 'DM Sans',sans-serif;color:#E8F0E8">{{ r.name }}</div>
+<div style="font:600 13px/1.2 'Space Grotesk',sans-serif;color:#9FB8A6">{{ r.score }}</div>
+</div>
+<div style="display:flex;gap:5px;margin-top:7px">
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="7">
+<div style="{{ c.style }}"></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:22px;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,.08);border-radius:14px">
+<div style="width:30px;height:30px;border-radius:15px;background:{{ accent }};color:var(--onAccent);display:flex;align-items:center;justify-content:center;font:500 13px/1 'DM Sans',sans-serif">{{ witnessInitial }}</div>
+<div style="font:400 13.5px/1.35 'DM Sans',sans-serif;color:#E8F0E8">Witnessed by {{ witnessName }} — every habit, every day.</div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button style="flex:1;height:52px;border:0;border-radius:16px;background:var(--brand);color:var(--onBrand);font:500 15px/1 'DM Sans',sans-serif;cursor:pointer;transition:filter .2s" style-hover="filter:brightness(1.15)">Share card</button>
+<button style="height:52px;padding:0 22px;border:1px solid var(--outline);border-radius:16px;background:transparent;color:var(--brandInk);font:500 15px/1 'DM Sans',sans-serif;cursor:pointer;transition:background .2s" style-hover="background:var(--brandSoft)">Save</button>
+</div>
+<div style="margin-top:14px;font:400 12.5px/1.5 'DM Sans',sans-serif;color:var(--ink3);text-align:center">Sent to {{ witnessName }} automatically every Sunday.</div>
+</div>
+<div style="display:flex;padding:8px 6px 12px;background:var(--surface);border-top:1px solid var(--line)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<div role="button" onClick="{{ t.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer">
+<div style="{{ t.pill }}"><div style="{{ t.glyph }}"></div></div>
+<div style="{{ t.label }}">{{ t.name }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWatch }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px">
+<div>
+<div style="font:400 13px/1.2 'DM Sans',sans-serif;color:var(--ink2)">Witness mode</div>
+<div style="font:600 24px/1.2 'Space Grotesk',sans-serif;color:var(--ink);margin-top:2px">Watching 2</div>
+</div>
+<div role="button" onClick="{{ goProfile }}" style="width:44px;height:44px;border-radius:22px;background:var(--chip);color:var(--ink);display:flex;align-items:center;justify-content:center;font:500 15px/1 'DM Sans',sans-serif;cursor:pointer">A</div>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px">
+<sc-for list="{{ watching }}" as="p" hint-placeholder-count="2">
+<div style="margin-bottom:14px;padding:18px;background:var(--surface);border-radius:22px">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="{{ p.avatar }}">{{ p.initial }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:500 17px/1.2 'DM Sans',sans-serif;color:var(--ink)">{{ p.name }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:3px">{{ p.sub }}</div>
+</div>
+<div style="{{ p.pill }}">{{ p.count }}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:7px;margin-top:14px">
+<sc-for list="{{ p.habits }}" as="h" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="{{ h.dot }}"></div>
+<div style="flex:1;min-width:0;font:400 13.5px/1.3 'DM Sans',sans-serif;color:var(--ink1)">{{ h.name }}</div>
+<div style="font:400 12.5px/1.3 'DM Sans',sans-serif;color:var(--ink3)">{{ h.time }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<button onClick="{{ p.cheer }}" style="flex:1;height:44px;border:0;border-radius:14px;background:var(--brand);color:var(--onBrand);font:500 14px/1 'DM Sans',sans-serif;cursor:pointer;transition:filter .2s" style-hover="filter:brightness(1.15)">Cheer</button>
+<button onClick="{{ p.nudge }}" style="flex:1;height:44px;border:1px solid var(--outline);border-radius:14px;background:transparent;color:var(--brandInk);font:500 14px/1 'DM Sans',sans-serif;cursor:pointer;transition:background .2s" style-hover="background:var(--brandSoft)">Nudge</button>
+</div>
+</div>
+</sc-for>
+<div style="padding:16px;border:1px dashed var(--dashed);border-radius:18px;font:400 13px/1.5 'DM Sans',sans-serif;color:var(--ink2)">No streak here, no score, nothing to lose. Witness mode only ever shows other people's days.</div>
+</div>
+<div style="display:flex;padding:8px 6px 12px;background:var(--surface);border-top:1px solid var(--line)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+<div role="button" onClick="{{ t.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer">
+<div style="{{ t.pill }}"><div style="{{ t.glyph }}"></div></div>
+<div style="{{ t.label }}">{{ t.name }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 8px 0">
+<div role="button" onClick="{{ goHome }}" style="width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:400 22px/1 'DM Sans',sans-serif;color:var(--ink);cursor:pointer" style-hover="background:var(--surface2)">←</div>
+<div style="font:400 20px/1 'DM Sans',sans-serif;color:var(--ink)">Profile</div>
+</div>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px">
+<div style="display:flex;align-items:center;gap:16px;padding:4px 4px 20px">
+<div style="width:68px;height:68px;border-radius:34px;background:var(--brand);color:#F5A3C7;display:flex;align-items:center;justify-content:center;font:600 26px/1 'Space Grotesk',sans-serif">A</div>
+<div style="flex:1;min-width:0">
+<div style="font:600 24px/1.15 'Space Grotesk',sans-serif;color:var(--ink)">Arun Prakash</div>
+<div style="font:400 13.5px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">Pair code 7K42 · joined May</div>
+</div>
+</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px">Mode</div>
+<div style="display:flex;padding:4px;background:var(--line);border-radius:100px">
+<div role="button" onClick="{{ setChallenger }}" style="{{ segChallenger }}">Challenger</div>
+<div role="button" onClick="{{ setWitness }}" style="{{ segWitness }}">Witness</div>
+</div>
+<div style="margin-top:12px;padding:16px;background:var(--surface);border-radius:18px;font:400 13.5px/1.5 'DM Sans',sans-serif;color:var(--ink1)">{{ modeExplainer }}</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:26px 0 10px">Appearance</div>
+<div style="display:flex;padding:4px;background:var(--line);border-radius:100px">
+<div role="button" onClick="{{ setLightTheme }}" style="{{ segLight }}">Light</div>
+<div role="button" onClick="{{ setDarkTheme }}" style="{{ segDark }}">Dark</div>
+</div>
+<div style="margin-top:10px;font:400 12.5px/1.5 'DM Sans',sans-serif;color:var(--ink2);padding:0 4px">{{ themeNote }}</div>
+
+<div style="display:flex;gap:10px;margin-top:16px">
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">{{ habitCount }}</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">habits</div>
+</div>
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">14</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">best streak</div>
+</div>
+<div style="flex:1;padding:14px;background:var(--surface);border-radius:18px">
+<div style="font:600 24px/1 'Space Grotesk',sans-serif;color:var(--ink)">2</div>
+<div style="font:400 12px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:4px">you watch</div>
+</div>
+</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:26px 0 10px">People</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ profileRows }}" as="r" hint-placeholder-count="4">
+<div role="button" onClick="{{ r.go }}" style="display:flex;align-items:center;gap:14px;padding:14px 6px;border-bottom:1px solid var(--line);cursor:pointer">
+<div style="{{ r.avatar }}">{{ r.initial }}</div>
+<div style="flex:1;min-width:0">
+<div style="font:500 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">{{ r.title }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;color:var(--ink2);margin-top:2px">{{ r.sub }}</div>
+</div>
+<div style="font:400 18px/1 'DM Sans',sans-serif;color:var(--dim)">›</div>
+</div>
+</sc-for>
+</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:26px 0 10px">Settings</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 6px;border-bottom:1px solid var(--line)">
+<div style="font:400 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">Daily reminder</div>
+<div style="font:400 14px/1.3 'DM Sans',sans-serif;color:var(--ink2)">7:00 am</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 6px;border-bottom:1px solid var(--line)">
+<div style="font:400 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">Let {{ witnessName }} nudge me</div>
+<div role="button" onClick="{{ toggleNudgeAllowed }}" style="{{ switchTrack }}"><div style="{{ switchThumb }}"></div></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 6px;border-bottom:1px solid var(--line)">
+<div style="font:400 15px/1.3 'DM Sans',sans-serif;color:var(--ink)">Grace days left</div>
+<div style="font:400 14px/1.3 'DM Sans',sans-serif;color:var(--ink2)">{{ grace }}</div>
+</div>
+</div>
+<div style="margin-top:22px;font:400 12.5px/1.5 'DM Sans',sans-serif;color:var(--ink3);text-align:center">Switching modes never deletes a challenge — it just changes what this phone shows.</div>
+</div>
+<div style="display:flex;padding:8px 6px 12px;background:var(--surface);border-top:1px solid var(--line)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<div role="button" onClick="{{ t.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer">
+<div style="{{ t.pill }}"><div style="{{ t.glyph }}"></div></div>
+<div style="{{ t.label }}">{{ t.name }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</x-import>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;max-width:412px">
+<div role="button" onClick="{{ goOnboard }}" style="{{ jumpOnboard }}">Onboarding</div>
+<div role="button" onClick="{{ goCreate }}" style="{{ jumpCreate }}">Habits</div>
+<div role="button" onClick="{{ goToday }}" style="{{ jumpToday }}">Today</div>
+<div role="button" onClick="{{ goRecap }}" style="{{ jumpRecap }}">Recap</div>
+<div role="button" onClick="{{ goProfile }}" style="{{ jumpProfile }}">Profile</div>
+<div role="button" onClick="{{ goWatch }}" style="{{ jumpWatch }}">Watching</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px;flex:none">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 11px/1 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;background:#4E5A50;color:#fff;border-radius:6px">Witness · {{ witnessName }}'s phone</span>
+<span style="font:400 13px/1 'DM Sans',sans-serif;color:#6B776C">Mirrors the left phone, live</span>
+</div>
+
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ isDark }}" width="{{ w }}" height="{{ h }}" hint-size="412px,892px">
+<div data-theme="{{ themeAttr }}" style="height:100%;display:flex;flex-direction:column;background:var(--bg);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 20px 8px">
+<div style="width:44px;height:44px;border-radius:22px;background:var(--brand);color:#F5A3C7;display:flex;align-items:center;justify-content:center;font:500 16px/1 'DM Sans',sans-serif">A</div>
+<div style="flex:1;min-width:0">
+<div style="font:400 13px/1.2 'DM Sans',sans-serif;color:var(--ink2)">You're watching</div>
+<div style="font:500 19px/1.2 'DM Sans',sans-serif;color:var(--ink)">Arun · Morning reset</div>
+</div>
+<div style="font:400 12.5px/1.2 'DM Sans',sans-serif;color:var(--ink3);text-align:right">Day {{ dayNo }}<br>of {{ totalDays }}</div>
+</div>
+
+<div style="flex:1;overflow:auto;padding:8px 20px 20px">
+<div style="{{ statusCardStyle }}">
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;{{ statusLabelColor }}">Today · 9:30 am</div>
+<div style="margin-top:10px;font:600 26px/1.15 'Space Grotesk',sans-serif;letter-spacing:-.01em;{{ statusTextColor }}">{{ witnessHeadline }}</div>
+<div style="margin-top:8px;font:400 14px/1.45 'DM Sans',sans-serif;{{ statusSubColor }}">{{ witnessSub }}</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:18px">
+<sc-for list="{{ witnessHabits }}" as="h" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:11px">
+<div style="{{ h.dot }}"></div>
+<div style="flex:1;min-width:0;font:400 14px/1.3 'DM Sans',sans-serif;{{ h.textColor }}">{{ h.name }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;{{ h.timeColor }}">{{ h.time }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:16px;padding:18px;background:var(--surface);border-radius:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:500 14px/1 'DM Sans',sans-serif;color:var(--ink)">Challenge progress</div>
+<div style="font:600 14px/1 'Space Grotesk',sans-serif;color:var(--ink2)">{{ progressPct }}%</div>
+</div>
+<div style="margin-top:12px;height:10px;border-radius:6px;background:var(--track);overflow:hidden">
+<div style="{{ progressFill }}"></div>
+</div>
+<div style="margin-top:10px;font:400 13px/1.4 'DM Sans',sans-serif;color:var(--ink2)">{{ perfectDays }} perfect days · {{ checkinTotal }} check-ins · {{ grace }} grace day left</div>
+</div>
+
+<div style="margin-top:16px;display:flex;gap:10px">
+<button onClick="{{ sendCheer }}" style="flex:1;height:52px;border:0;border-radius:16px;background:var(--brand);color:var(--onBrand);font:500 15px/1 'DM Sans',sans-serif;cursor:pointer;transition:filter .2s,transform .12s" style-hover="filter:brightness(1.15)" style-active="transform:scale(.98)">Cheer</button>
+<button onClick="{{ sendNudge }}" style="flex:1;height:52px;border:1px solid var(--outline);border-radius:16px;background:transparent;color:var(--brandInk);font:500 15px/1 'DM Sans',sans-serif;cursor:pointer;transition:background .2s" style-hover="background:var(--brandSoft)">Nudge</button>
+</div>
+<div style="margin-top:8px;font:400 12.5px/1.4 'DM Sans',sans-serif;color:var(--ink3);text-align:center">One nudge a day. Use it well.</div>
+
+<div style="font:500 11px/1 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:26px 0 10px">Log</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ log }}" as="l" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)">
+<div style="{{ l.dot }}"></div>
+<div style="flex:1;min-width:0">
+<div style="font:500 14.5px/1.3 'DM Sans',sans-serif;color:var(--ink)">{{ l.day }}</div>
+<div style="font:400 13px/1.3 'DM Sans',sans-serif;color:var(--ink2)">{{ l.detail }}</div>
+</div>
+<div style="font:600 13.5px/1.3 'Space Grotesk',sans-serif;color:var(--ink2)">{{ l.score }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top:22px;padding:16px;border:1px dashed var(--dashed);border-radius:18px;font:400 13px/1.5 'DM Sans',sans-serif;color:var(--ink2)">You have no streak here, no score, nothing to lose. That's the point — Arun's three habits are the only thing on this screen.</div>
+</div>
+</div>
+</x-import>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#CDF564&quot;,&quot;options&quot;:[&quot;#CDF564&quot;,&quot;#FFB86B&quot;,&quot;#8FD6FF&quot;,&quot;#F5A3C7&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Light&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Warm&quot;,&quot;Competitive&quot;,&quot;Dry&quot;],&quot;default&quot;:&quot;Competitive&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Copy&quot;},&quot;witnessName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sriponbala&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Copy&quot;},&quot;totalDays&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:30,&quot;min&quot;:7,&quot;max&quot;:66,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Challenge&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'onboard', role: 'doer', mode: 'challenger', days: 30, grace: 1, witnessIdx: 0,
+    tab: 'today', cheered: false, nudged: false, nudgeAllowed: true, theme: null,
+    habits: [
+      { id: 'run', name: 'Run 3 km', detail: 'before 8 am', icon: 'R', done: false, time: '6:42 am', streak: 11 },
+      { id: 'read', name: 'Read 20 pages', detail: 'any book, no phone', icon: 'B', done: false, time: '9:05 pm', streak: 8 },
+      { id: 'sugar', name: 'No sugar after 6 pm', detail: 'logged at bedtime', icon: 'S', done: false, time: '10:30 pm', streak: 4 },
+    ],
+  };
+
+  set(k, v) { this.setState({ [k]: v }); }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accent ?? '#F5A3C7';
+    const theme = s.theme ?? (this.props.theme === 'Dark' ? 'dark' : 'light');
+    const tone = this.props.tone ?? 'Warm';
+    const people = [
+      { name: this.props.witnessName ?? 'Priya', note: 'Roommate · always up at 6' },
+      { name: 'Dev', note: 'Ran the last one with you' },
+      { name: 'Sam', note: 'Brutally honest' },
+    ];
+    const witnessName = people[s.witnessIdx].name;
+    const witnessInitial = witnessName[0];
+    const totalDays = this.props.totalDays ?? s.days;
+    const dayNo = 12;
+    const habitCount = s.habits.length;
+    const doneCount = s.habits.filter(h => h.done).length;
+    const allDone = habitCount > 0 && doneCount === habitCount;
+    const daysLeft = Math.max(totalDays - dayNo, 0);
+    const perfectDays = 8 + (allDone ? 1 : 0);
+    const checkinTotal = 29 + doneCount;
+    const progressPct = Math.round((perfectDays / totalDays) * 100);
+    const CIRC = 351.9;
+    const ringOffset = CIRC * (1 - (habitCount ? doneCount / habitCount : 0));
+
+    const copy = {
+      Warm: {
+        cheer: allDone ? 'All three, twelve days running. You just do this now.' : 'Two down. The third one counts too.',
+        nudge: witnessName + ' nudged you — no pressure, just a wave.',
+      },
+      Competitive: {
+        cheer: allDone ? "Fine, all three. Don't get comfortable." : "Half a day isn't a day. Finish it.",
+        nudge: witnessName + ' counted your empty boxes. Clock is ticking.',
+      },
+      Dry: {
+        cheer: 'Logged. ' + doneCount + ' of ' + habitCount + ' today, ' + perfectDays + ' perfect days.',
+        nudge: 'Nudge from ' + witnessName + '. ' + (habitCount - doneCount) + ' habits unlogged.',
+      },
+    }[tone];
+
+    const chip = (on) => 'display:flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:12px;cursor:pointer;font:500 14px/1 \'DM Sans\',sans-serif;transition:background .18s,border-color .18s;' +
+      (on ? 'background:var(--brand);color:var(--onBrand);border:1px solid var(--brand)' : 'background:transparent;color:var(--brandInk);border:1px solid var(--outline)');
+    const dot = (on) => 'width:20px;height:20px;border-radius:10px;flex:none;transition:background .18s,border-color .18s;' +
+      (on ? 'background:var(--brand);border:6px solid var(--brandInk);box-shadow:inset 0 0 0 3px var(--bg)' : 'border:2px solid var(--dim)');
+    const roleCard = (on) => 'padding:18px;border-radius:20px;cursor:pointer;transition:background .2s,border-color .2s;' +
+      (on ? 'background:var(--brandSoft);border:2px solid var(--brandInk)' : 'background:var(--surface);border:2px solid transparent');
+    const smallDot = (state) => 'width:12px;height:12px;border-radius:6px;flex:none;box-sizing:border-box;transition:background .3s;' +
+      (state === 'done' ? 'background:' + accent : state === 'miss' ? 'border:2px dashed var(--dotMiss)' : 'background:var(--dotIdle)');
+
+    const habits = s.habits.map((h, i) => ({
+      name: h.name, streak: h.streak + (h.done ? 1 : 0),
+      sub: h.done ? 'Checked in · ' + h.time : h.detail,
+      tick: h.done ? '✓' : '',
+      toggle: () => this.setState(p => ({
+        habits: p.habits.map((x, j) => j === i ? Object.assign({}, x, { done: !x.done }) : x),
+        cheered: false, nudged: false,
+      })),
+      cardStyle: 'display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;cursor:pointer;transition:background .25s,box-shadow .25s;' +
+        (h.done ? 'background:var(--brandSoft)' : 'background:var(--surface)'),
+      checkStyle: 'width:34px;height:34px;border-radius:17px;flex:none;display:flex;align-items:center;justify-content:center;font:400 17px/1 \'DM Sans\',sans-serif;color:var(--onAccent);box-sizing:border-box;transition:background .25s,border-color .25s;' +
+        (h.done ? 'background:' + accent + ';border:2px solid ' + accent : 'border:2px solid var(--dim)'),
+      nameStyle: 'font:500 16px/1.25 \'DM Sans\',sans-serif;color:var(--ink);' + (h.done ? 'text-decoration:line-through;text-decoration-color:var(--dim)' : ''),
+    }));
+
+    const editHabits = s.habits.map((h, i) => ({
+      name: h.name, detail: h.detail, icon: h.icon,
+      chipStyle: 'width:38px;height:38px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font:500 14px/1 \'DM Sans\',sans-serif;background:var(--brand);color:' + accent,
+      remove: () => this.setState(p => ({ habits: p.habits.filter((x, j) => j !== i) })),
+    }));
+
+    const spare = [
+      { id: 'water', name: 'Two litres of water', detail: 'logged at bedtime', icon: 'W', done: false, time: '9:00 pm', streak: 0 },
+      { id: 'stretch', name: '10 min stretch', detail: 'after work', icon: 'M', done: false, time: '6:30 pm', streak: 0 },
+    ];
+
+    const durations = [7, 21, 30, 66].map(n => ({
+      label: n + ' days', style: chip(s.days === n), pick: () => this.set('days', n),
+    }));
+
+    const peopleRows = people.map((p, i) => ({
+      name: p.name, note: p.note, initial: p.name[0],
+      pick: () => this.set('witnessIdx', i),
+      style: 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;cursor:pointer;transition:background .2s,border-color .2s;' +
+        (s.witnessIdx === i ? 'background:var(--brandSoft);border:2px solid var(--brandInk)' : 'background:var(--surface);border:2px solid transparent'),
+      avatar: 'width:40px;height:40px;border-radius:20px;flex:none;display:flex;align-items:center;justify-content:center;font:500 15px/1 \'DM Sans\',sans-serif;' +
+        (s.witnessIdx === i ? 'background:var(--brand);color:' + accent : 'background:var(--chip);color:var(--ink2)'),
+      dot: dot(s.witnessIdx === i),
+    }));
+
+    const cell = (v) => ({ style: 'flex:1;height:26px;border-radius:8px;box-sizing:border-box;' + (v ? 'background:' + accent : 'border:2px dashed rgba(255,255,255,.32)') });
+    const recapRows = [
+      { name: 'Run 3 km', score: '7/7', cells: [1, 1, 1, 1, 1, 1, 1].map(cell) },
+      { name: 'Read 20 pages', score: '6/7', cells: [1, 1, 0, 1, 1, 1, 1].map(cell) },
+      { name: 'No sugar after 6 pm', score: '5/7', cells: [1, 0, 1, 1, 0, 1, 1].map(cell) },
+    ];
+
+    const isWitnessMode = s.mode === 'witness';
+    const tabDef = isWitnessMode
+      ? [{ key: 'watch', name: 'Watching', go: () => this.setState({ screen: 'watch', tab: 'watch' }) },
+         { key: 'profile', name: 'Profile', go: () => this.setState({ screen: 'profile', tab: 'profile' }) }]
+      : [{ key: 'today', name: 'Today', go: () => this.setState({ screen: 'today', tab: 'today' }) },
+         { key: 'habits', name: 'Habits', go: () => this.setState({ screen: 'create', tab: 'habits' }) },
+         { key: 'recap', name: 'Recap', go: () => this.setState({ screen: 'recap', tab: 'recap' }) },
+         { key: 'profile', name: 'Profile', go: () => this.setState({ screen: 'profile', tab: 'profile' }) }];
+    const tabs = tabDef.map(t => {
+      const on = s.tab === t.key;
+      return { name: t.name, go: t.go,
+        pill: 'width:60px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;transition:background .2s;' + (on ? 'background:var(--tabPill)' : 'background:transparent'),
+        glyph: 'width:16px;height:16px;border-radius:5px;transition:background .2s;' + (on ? 'background:var(--brand)' : 'background:var(--dim)'),
+        label: 'font:' + (on ? '500' : '400') + ' 12px/1 \'DM Sans\',sans-serif;color:' + (on ? 'var(--ink)' : 'var(--ink2)') };
+    });
+
+    const jump = (on) => 'padding:7px 13px;border-radius:100px;cursor:pointer;font:500 12.5px/1 \'DM Sans\',sans-serif;transition:background .2s;' +
+      (on ? 'background:#1F3D2B;color:#fff' : 'background:#E1DCD1;color:#4E5A50');
+
+    const watching = [
+      { name: 'Meera', initial: 'M', sub: 'Evening wind-down · day 6 of 21', count: '2/3', ok: true,
+        habits: [
+          { name: 'Lights out by 11', time: '11:02 pm', state: 'done' },
+          { name: 'No screens at dinner', time: '8:15 pm', state: 'done' },
+          { name: 'Journal one page', time: '—', state: 'todo' },
+        ] },
+      { name: 'Karthik', initial: 'K', sub: 'Couch to 5k · day 3 of 30', count: '0/2', ok: false,
+        habits: [
+          { name: 'Morning walk 2 km', time: '—', state: 'todo' },
+          { name: 'Stretch 10 min', time: '—', state: 'todo' },
+        ] },
+    ].map(p => ({
+      name: p.name, initial: p.initial, sub: p.sub, count: p.count,
+      avatar: 'width:46px;height:46px;border-radius:23px;flex:none;display:flex;align-items:center;justify-content:center;font:500 17px/1 \'DM Sans\',sans-serif;background:var(--brand);color:' + accent,
+      pill: 'padding:6px 12px;border-radius:100px;font:600 13px/1 \'Space Grotesk\',sans-serif;flex:none;' +
+        (p.ok ? 'background:var(--brandSoft);color:var(--brandInk)' : 'background:var(--warn);color:var(--warnInk)'),
+      habits: p.habits.map(h => ({ name: h.name, time: h.time, dot: smallDot(h.state) })),
+      cheer: () => this.set('cheered', true),
+      nudge: () => this.set('nudged', true),
+    }));
+
+    const seg = (on) => 'flex:1;text-align:center;padding:11px 0;border-radius:100px;cursor:pointer;font:500 14px/1 \'DM Sans\',sans-serif;transition:background .22s,color .22s;' +
+      (on ? 'background:var(--brand);color:var(--onBrand)' : 'background:transparent;color:var(--ink2)');
+
+    const profileRows = [
+      { title: witnessName, sub: 'Your witness · sees all ' + habitCount + ' habits', initial: witnessInitial, tint: true, go: () => this.setState({ screen: 'create', tab: 'habits' }) },
+      { title: 'Meera', sub: "You're watching · evening wind-down", initial: 'M', tint: false, go: () => this.setState({ screen: 'watch', tab: 'watch', mode: 'witness' }) },
+      { title: 'Karthik', sub: "You're watching · couch to 5k", initial: 'K', tint: false, go: () => this.setState({ screen: 'watch', tab: 'watch', mode: 'witness' }) },
+      { title: 'Invite someone', sub: 'Share pair code 7K42', initial: '+', tint: false, go: () => {} },
+    ].map(r => Object.assign({}, r, {
+      avatar: 'width:40px;height:40px;border-radius:20px;flex:none;display:flex;align-items:center;justify-content:center;font:500 15px/1 \'DM Sans\',sans-serif;' +
+        (r.tint ? 'background:var(--brand);color:' + accent : 'background:var(--chip);color:var(--ink2)'),
+    }));
+
+    const witnessHabits = s.habits.map(h => ({
+      name: h.name, time: h.done ? h.time : 'not yet',
+      dot: smallDot(h.done ? 'done' : 'todo'),
+      textColor: allDone ? 'color:#E8F0E8' : 'color:var(--ink1)',
+      timeColor: allDone ? 'color:#9FB8A6' : 'color:var(--ink3)',
+    }));
+
+    const log = [
+      { day: 'Today · Day 12', detail: doneCount === 0 ? 'Nothing yet' : (allDone ? 'All habits done' : s.habits.filter(h => h.done).map(h => h.name).join(', ')), score: doneCount + '/' + habitCount,
+        dot: smallDot(doneCount === 0 ? 'todo' : 'done') },
+      { day: 'Yesterday · Day 11', detail: 'Perfect day', score: '3/3', dot: smallDot('done') },
+      { day: 'Mon · Day 10', detail: 'Missed reading', score: '2/3', dot: smallDot('done') },
+      { day: 'Sun · Day 9', detail: 'Grace day used', score: '0/3', dot: smallDot('miss') },
+      { day: 'Sat · Day 8', detail: 'Perfect day', score: '3/3', dot: smallDot('done') },
+    ];
+
+    return {
+      w: 412, h: 892,
+      accent, witnessName, witnessInitial, totalDays, dayNo, habitCount, doneCount,
+      daysLeft, perfectDays, checkinTotal, progressPct, ringOffset, grace: s.grace,
+      cheered: s.cheered, nudged: s.nudged, cheerMsg: copy.cheer, nudgeMsg: copy.nudge,
+      isOnboard: s.screen === 'onboard', isCreate: s.screen === 'create',
+      isToday: s.screen === 'today', isRecap: s.screen === 'recap',
+      isProfile: s.screen === 'profile', isWatch: s.screen === 'watch',
+      habits, editHabits, durations, people: peopleRows, recapRows, tabs, log, watching,
+      profileRows, witnessHabits,
+      addHabitStyle: 'margin-top:10px;padding:14px;border:1px dashed var(--dashed);border-radius:16px;text-align:center;font:500 14px/1 \'DM Sans\',sans-serif;cursor:pointer;transition:background .2s;' +
+        (habitCount >= 5 ? 'color:var(--dim);pointer-events:none' : 'color:var(--brandInk)'),
+      addHabit: () => this.setState(p => p.habits.length >= 5 ? null : ({
+        habits: p.habits.concat([spare[(p.habits.length - 3 + spare.length) % spare.length]]),
+      })),
+      dayHeadline: allDone ? 'Day complete.' : doneCount === 0 ? 'Nothing checked yet.' : doneCount + ' down, ' + (habitCount - doneCount) + ' to go.',
+      daySub: allDone
+        ? 'Every habit logged. ' + witnessName + ' already saw it.'
+        : 'Tap a habit to check it off. ' + witnessName + ' sees each one as it lands.',
+      startSummary: s.days + ' days · ' + habitCount + ' habits',
+      witnessStatusShort: allDone ? 'saw all three' : doneCount > 0 ? 'watching you finish' : 'waiting',
+      witnessHeadline: allDone ? 'Arun finished the day.' : doneCount > 0 ? 'Arun is ' + doneCount + ' of ' + habitCount + '.' : 'Nothing yet.',
+      witnessSub: allDone
+        ? 'All ' + habitCount + ' habits logged. Nothing for you to do.'
+        : doneCount > 0
+          ? 'Part of the stack is done. The rest is still open.'
+          : "It's 9:30 am and every box is empty. The run was due at 8:00.",
+      statusCardStyle: 'padding:22px;border-radius:24px;transition:background .35s;' + (allDone ? 'background:var(--brand)' : 'background:var(--warn)'),
+      statusLabelColor: allDone ? 'color:#9FB8A6' : 'color:var(--warnLabel)',
+      statusTextColor: allDone ? 'color:var(--onBrand)' : 'color:var(--ink)',
+      statusSubColor: allDone ? 'color:#C9D8CC' : 'color:var(--warnSub)',
+      progressFill: 'height:100%;border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1);background:var(--brand);width:' + progressPct + '%',
+      ringWrapStyle: 'position:relative;width:132px;height:132px;flex:none;' + (allDone ? 'animation:ringPulse .5s ease' : ''),
+      roleDoerStyle: roleCard(s.role === 'doer'), roleWitStyle: roleCard(s.role === 'witness'),
+      roleDoerDot: dot(s.role === 'doer'), roleWitDot: dot(s.role === 'witness'),
+      segChallenger: seg(!isWitnessMode), segWitness: seg(isWitnessMode),
+      themeAttr: theme, isDark: theme === 'dark',
+      segLight: seg(theme === 'light'), segDark: seg(theme === 'dark'),
+      setLightTheme: () => this.set('theme', 'light'),
+      setDarkTheme: () => this.set('theme', 'dark'),
+      themeNote: theme === 'dark'
+        ? 'Dark uses the same greens at low light — check marks and the ring stay the brightest things on screen.'
+        : 'Follows this setting only. Switching never changes what your witness sees.',
+      modeExplainer: isWitnessMode
+        ? "Witness mode hides your own challenge. You see Meera's and Karthik's days, and you can cheer or nudge — but you can't check anything off for them."
+        : 'Challenger mode shows your stack of ' + habitCount + ' habits and hides the people you watch. ' + witnessName + ' still sees everything you log.',
+      switchTrack: 'width:52px;height:32px;border-radius:16px;padding:2px;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;transition:background .22s;' +
+        (s.nudgeAllowed ? 'background:var(--brand);justify-content:flex-end' : 'background:var(--dotIdle);justify-content:flex-start'),
+      switchThumb: 'width:26px;height:26px;border-radius:13px;transition:background .22s;background:' + (s.nudgeAllowed ? accent : 'var(--knob)'),
+      toggleNudgeAllowed: () => this.setState(p => ({ nudgeAllowed: !p.nudgeAllowed })),
+      leftBadge: isWitnessMode ? 'Witness mode · same phone' : 'Challenger · Arun',
+      leftBadgeStyle: 'font:600 11px/1 \'DM Sans\',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:6px;color:#fff;transition:background .25s;background:' + (isWitnessMode ? '#4E5A50' : '#1F3D2B'),
+      jumpOnboard: jump(s.screen === 'onboard'), jumpCreate: jump(s.screen === 'create'),
+      jumpToday: jump(s.screen === 'today'), jumpRecap: jump(s.screen === 'recap'),
+      jumpProfile: jump(s.screen === 'profile'), jumpWatch: jump(s.screen === 'watch'),
+      pickDoer: () => this.set('role', 'doer'),
+      pickWitness: () => this.set('role', 'witness'),
+      continueFromOnboard: () => s.role === 'doer'
+        ? this.setState({ screen: 'create', tab: 'habits', mode: 'challenger' })
+        : this.setState({ screen: 'watch', tab: 'watch', mode: 'witness' }),
+      goOnboard: () => this.set('screen', 'onboard'),
+      goCreate: () => this.setState({ screen: 'create', tab: 'habits', mode: 'challenger' }),
+      goToday: () => this.setState({ screen: 'today', tab: 'today', mode: 'challenger' }),
+      goRecap: () => this.setState({ screen: 'recap', tab: 'recap', mode: 'challenger' }),
+      goProfile: () => this.setState({ screen: 'profile', tab: 'profile' }),
+      goWatch: () => this.setState({ screen: 'watch', tab: 'watch', mode: 'witness' }),
+      goHome: () => isWitnessMode
+        ? this.setState({ screen: 'watch', tab: 'watch' })
+        : this.setState({ screen: 'today', tab: 'today' }),
+      setChallenger: () => this.setState({ mode: 'challenger', screen: 'profile', tab: 'profile' }),
+      setWitness: () => this.setState({ mode: 'witness', screen: 'profile', tab: 'profile' }),
+      graceUp: () => this.setState(p => ({ grace: Math.min(p.grace + 1, 3) })),
+      graceDown: () => this.setState(p => ({ grace: Math.max(p.grace - 1, 0) })),
+      sendCheer: () => this.setState({ cheered: true, screen: 'today', tab: 'today', mode: 'challenger' }),
+      sendNudge: () => this.setState({ nudged: true, screen: 'today', tab: 'today', mode: 'challenger' }),
+      dismissNudge: () => this.set('nudged', false),
+    };
+  }
+}
+</script>
+</body>
+</html>
