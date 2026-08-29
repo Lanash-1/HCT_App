@@ -1,6 +1,0 @@
-{
-  "functions": {
-    "targets": ["dayRollover", "cheerNudge", "weeklyRecap"],
-    "source": "functions"
-  }
-}
