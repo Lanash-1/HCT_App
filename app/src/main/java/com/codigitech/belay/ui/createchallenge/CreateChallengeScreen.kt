@@ -23,6 +23,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -31,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.codigitech.belay.ui.common.BelayTimePickerDialog
 
 @Composable
 fun CreateChallengeRoute(
@@ -49,6 +53,7 @@ fun CreateChallengeRoute(
     onTitleChange = viewModel::onTitleChange,
     onHabitNameChange = viewModel::onHabitNameChange,
     onHabitDetailChange = viewModel::onHabitDetailChange,
+    onHabitReminderTimeChange = viewModel::onHabitReminderTimeChange,
     onAddHabit = viewModel::addHabit,
     onRemoveHabit = viewModel::removeHabit,
     onSelectDuration = viewModel::selectDuration,
@@ -66,6 +71,7 @@ fun CreateChallengeScreen(
   onTitleChange: (String) -> Unit,
   onHabitNameChange: (Int, String) -> Unit,
   onHabitDetailChange: (Int, String) -> Unit,
+  onHabitReminderTimeChange: (Int, String?) -> Unit,
   onAddHabit: () -> Unit,
   onRemoveHabit: (Int) -> Unit,
   onSelectDuration: (Int) -> Unit,
@@ -94,6 +100,7 @@ fun CreateChallengeScreen(
             showRemove = uiState.habits.size > 1,
             onNameChange = { onHabitNameChange(index, it) },
             onDetailChange = { onHabitDetailChange(index, it) },
+            onReminderTimeChange = { onHabitReminderTimeChange(index, it) },
             onRemove = { onRemoveHabit(index) },
           )
         }
@@ -167,7 +174,16 @@ private fun SectionHeader(title: String, trailing: String? = null) {
 }
 
 @Composable
-private fun HabitRow(habit: HabitInput, showRemove: Boolean, onNameChange: (String) -> Unit, onDetailChange: (String) -> Unit, onRemove: () -> Unit) {
+private fun HabitRow(
+  habit: HabitInput,
+  showRemove: Boolean,
+  onNameChange: (String) -> Unit,
+  onDetailChange: (String) -> Unit,
+  onReminderTimeChange: (String?) -> Unit,
+  onRemove: () -> Unit,
+) {
+  var showReminderDialog by remember { mutableStateOf(false) }
+
   Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
     Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Top) {
       Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -185,6 +201,12 @@ private fun HabitRow(habit: HabitInput, showRemove: Boolean, onNameChange: (Stri
           singleLine = true,
           modifier = Modifier.fillMaxWidth(),
         )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+          TextButton(onClick = { showReminderDialog = true }) { Text(CreateChallengeCopy.reminderLabel(habit.reminderTime)) }
+          if (habit.reminderTime != null) {
+            TextButton(onClick = { onReminderTimeChange(null) }) { Text(CreateChallengeCopy.CLEAR_REMINDER) }
+          }
+        }
       }
       if (showRemove) {
         IconButton(onClick = onRemove, modifier = Modifier.semantics { contentDescription = "Remove habit" }) {
@@ -192,6 +214,17 @@ private fun HabitRow(habit: HabitInput, showRemove: Boolean, onNameChange: (Stri
         }
       }
     }
+  }
+
+  if (showReminderDialog) {
+    BelayTimePickerDialog(
+      initial = habit.reminderTime,
+      onDismiss = { showReminderDialog = false },
+      onConfirm = { time ->
+        onReminderTimeChange(time)
+        showReminderDialog = false
+      },
+    )
   }
 }
 

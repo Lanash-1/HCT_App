@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class HabitInput(val name: String = "", val detail: String = "")
+data class HabitInput(val name: String = "", val detail: String = "", val reminderTime: String? = null)
 
 data class WitnessOption(val userId: String, val displayName: String)
 
@@ -69,6 +69,10 @@ constructor(
     updateHabit(index) { it.copy(detail = value) }
   }
 
+  fun onHabitReminderTimeChange(index: Int, value: String?) {
+    updateHabit(index) { it.copy(reminderTime = value) }
+  }
+
   private fun updateHabit(index: Int, transform: (HabitInput) -> HabitInput) {
     _uiState.update { state ->
       state.copy(habits = state.habits.mapIndexed { i, habit -> if (i == index) transform(habit) else habit }, errorMessage = null)
@@ -108,7 +112,9 @@ constructor(
     val title = state.title.trim()
     val habits =
       state.habits.mapNotNull { habit ->
-        habit.name.trim().takeIf { it.isNotBlank() }?.let { name -> HabitSpec(name, habit.detail.trim().ifBlank { null }) }
+        habit.name.trim().takeIf { it.isNotBlank() }?.let { name ->
+          HabitSpec(name, habit.detail.trim().ifBlank { null }, reminderTime = habit.reminderTime)
+        }
       }
     val duration = state.selectedDurationDays
     val witnessId = state.selectedWitnessId
