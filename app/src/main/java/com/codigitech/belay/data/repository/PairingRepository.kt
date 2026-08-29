@@ -12,6 +12,9 @@ sealed interface PairingResult {
   data class Success(val pairing: PairingEntity) : PairingResult
 
   data object NotFound : PairingResult
+
+  /** The remote lookup itself failed (offline, flaky connection) — distinct from a genuinely invalid code. */
+  data object NetworkError : PairingResult
 }
 
 interface PairingRepository {
@@ -40,7 +43,10 @@ constructor(
         status = "pending",
         createdAt = clock.nowEpochMillis(),
       )
-    remoteDataSource.upsert(pairing)
+    // Best-effort remote write: a Firestore hiccup shouldn't crash role pick, and the code is
+    // still usable once connectivity returns (no dedicated retry queue for this yet, unlike
+    // check-ins' WorkManager queue — see TECH_STACK.md §5).
+    runCatching { remoteDataSource.upsert(pairing) }
     pairingDao.upsert(pairing)
     return pairing
   }
@@ -48,9 +54,14 @@ constructor(
   override suspend fun completePairing(pairCode: String, toUserId: String): PairingResult {
     // The pairing was created on the other person's device, so it must be resolved remotely —
     // local Room only ever has pairings this device itself created or already completed.
-    val pending = remoteDataSource.findPendingByCode(pairCode) ?: return PairingResult.NotFound
+    val pending =
+      try {
+        remoteDataSource.findPendingByCode(pairCode) ?: return PairingResult.NotFound
+      } catch (e: Exception) {
+        return PairingResult.NetworkError
+      }
     val paired = pending.copy(toUserId = toUserId, status = "paired")
-    remoteDataSource.upsert(paired)
+    runCatching { remoteDataSource.upsert(paired) }
     pairingDao.upsert(paired)
     return PairingResult.Success(paired)
   }

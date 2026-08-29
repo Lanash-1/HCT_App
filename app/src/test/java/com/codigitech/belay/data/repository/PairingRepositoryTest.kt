@@ -24,16 +24,22 @@ private class FakePairingDao : PairingDao {
     stored.values.firstOrNull { it.pairCode == pairCode && it.status == "pending" }
 }
 
-private class FakePairingRemoteDataSource : PairingRemoteDataSource {
+private class FakePairingRemoteDataSource(private val unreachable: Boolean = false) : PairingRemoteDataSource {
   val stored = mutableMapOf<String, PairingEntity>()
 
   override suspend fun upsert(pairing: PairingEntity) {
+    if (unreachable) throw PairingFirestoreUnavailableException()
     stored[pairing.pairingId] = pairing
   }
 
-  override suspend fun findPendingByCode(pairCode: String): PairingEntity? =
-    stored.values.firstOrNull { it.pairCode == pairCode && it.status == "pending" }
+  override suspend fun findPendingByCode(pairCode: String): PairingEntity? {
+    if (unreachable) throw PairingFirestoreUnavailableException()
+    return stored.values.firstOrNull { it.pairCode == pairCode && it.status == "pending" }
+  }
 }
+
+/** Stands in for `FirebaseFirestoreException: Failed to get document because the client is offline.` */
+private class PairingFirestoreUnavailableException : Exception()
 
 class PairingRepositoryTest {
 
@@ -101,5 +107,23 @@ class PairingRepositoryTest {
     val secondAttempt = repository(dao, remote).completePairing(pairCode = pending.pairCode, toUserId = "user-3")
 
     assertEquals(PairingResult.NotFound, secondAttempt)
+  }
+
+  @Test
+  fun `creating a pending pairing still succeeds locally even if the remote write fails`() = runTest {
+    val dao = FakePairingDao()
+    val remote = FakePairingRemoteDataSource(unreachable = true)
+
+    val pairing = repository(dao, remote).createPendingPairing(fromUserId = "user-1")
+
+    assertEquals("user-1", pairing.fromUserId)
+    assertEquals(dao.stored[pairing.pairingId], pairing)
+  }
+
+  @Test
+  fun `completing a pairing surfaces a network error, distinct from an invalid code, when the remote lookup fails`() = runTest {
+    val result = repository(FakePairingDao(), FakePairingRemoteDataSource(unreachable = true)).completePairing("ZZZZ", "user-2")
+
+    assertEquals(PairingResult.NetworkError, result)
   }
 }

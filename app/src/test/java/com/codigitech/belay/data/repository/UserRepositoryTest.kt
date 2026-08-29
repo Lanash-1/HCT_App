@@ -26,15 +26,22 @@ private class FakeUserDao : UserDao {
   override suspend fun get(userId: String): UserEntity? = stored[userId]?.value
 }
 
-private class FakeUserRemoteDataSource : UserRemoteDataSource {
+private class FakeUserRemoteDataSource(private val unreachable: Boolean = false) : UserRemoteDataSource {
   val stored = mutableMapOf<String, UserEntity>()
 
-  override suspend fun get(userId: String): UserEntity? = stored[userId]
+  override suspend fun get(userId: String): UserEntity? {
+    if (unreachable) throw FirestoreUnavailableException()
+    return stored[userId]
+  }
 
   override suspend fun upsert(user: UserEntity) {
+    if (unreachable) throw FirestoreUnavailableException()
     stored[user.userId] = user
   }
 }
+
+/** Stands in for `FirebaseFirestoreException: Failed to get document because the client is offline.` */
+private class FirestoreUnavailableException : Exception()
 
 class UserRepositoryTest {
 
@@ -94,6 +101,41 @@ class UserRepositoryTest {
     repo.setDefaultMode(userId = "user-1", mode = "witness")
 
     assertEquals("witness", remote.stored["user-1"]?.defaultMode)
+    assertEquals("witness", dao.get("user-1")?.defaultMode)
+  }
+
+  @Test
+  fun `ensureProfile still creates a usable local profile when Firestore is unreachable (first launch, offline)`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource(unreachable = true)
+
+    val user = repository(dao, remote).ensureProfile(userId = "user-1", displayName = "ana")
+
+    assertEquals("user-1", user.userId)
+    assertEquals("ana", user.displayName)
+    assertEquals(user, dao.get("user-1"))
+  }
+
+  @Test
+  fun `ensureProfile falls back to the local cache when Firestore is unreachable but a profile already exists`() = runTest {
+    val dao = FakeUserDao()
+    val existing = UserEntity("user-1", "ana", "AAAA", "witness", "dark", null, false, 1L)
+    dao.upsert(existing)
+    val remote = FakeUserRemoteDataSource(unreachable = true)
+
+    val user = repository(dao, remote).ensureProfile(userId = "user-1", displayName = "ignored-new-name")
+
+    assertEquals(existing, user)
+  }
+
+  @Test
+  fun `setDefaultMode still updates the local cache when Firestore is unreachable`() = runTest {
+    val dao = FakeUserDao()
+    dao.upsert(UserEntity("user-1", "ana", "AAAA", "challenger", "system", null, true, 1L))
+    val remote = FakeUserRemoteDataSource(unreachable = true)
+
+    repository(dao, remote).setDefaultMode(userId = "user-1", mode = "witness")
+
     assertEquals("witness", dao.get("user-1")?.defaultMode)
   }
 }
