@@ -6,6 +6,7 @@ import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.notification.ReminderScheduler
 import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
 import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import kotlinx.coroutines.flow.Flow
@@ -77,6 +78,18 @@ private class FakeHabitRemoteDataSource(private val unreachable: Boolean = false
 /** Stands in for `FirebaseFirestoreException: Failed to get document because the client is offline.` */
 private class ChallengeFirestoreUnavailableException : Exception()
 
+private class FakeReminderScheduler : ReminderScheduler {
+  val scheduled = mutableListOf<Triple<String, String, String>>()
+
+  override fun scheduleHabitReminder(habitId: String, habitName: String, time: String) {
+    scheduled += Triple(habitId, habitName, time)
+  }
+
+  override fun cancelHabitReminder(habitId: String) {
+    scheduled.removeAll { it.first == habitId }
+  }
+}
+
 class ChallengeRepositoryTest {
 
   private val fixedClock = BelayClock { 86_400_000L } // epoch day 1, midnight UTC
@@ -88,6 +101,7 @@ class ChallengeRepositoryTest {
     habitDao: HabitDao = FakeHabitDao(),
     challengeRemote: ChallengeRemoteDataSource = FakeChallengeRemoteDataSource(),
     habitRemote: HabitRemoteDataSource = FakeHabitRemoteDataSource(),
+    reminderScheduler: ReminderScheduler = FakeReminderScheduler(),
   ) =
     ChallengeRepositoryImpl(
       challengeDao = challengeDao,
@@ -96,6 +110,7 @@ class ChallengeRepositoryTest {
       habitRemoteDataSource = habitRemote,
       clock = fixedClock,
       idGenerator = sequentialIds,
+      reminderScheduler = reminderScheduler,
     )
 
   private val validHabits = listOf(HabitSpec(name = "Run 3km", detail = "before 8am"), HabitSpec(name = "Read", detail = null))
@@ -228,6 +243,31 @@ class ChallengeRepositoryTest {
 
     assertEquals(ChallengeCreationResult.InvalidGraceDays, tooMany)
     assertEquals(ChallengeCreationResult.InvalidGraceDays, negative)
+  }
+
+  @Test
+  fun `creating a challenge schedules a reminder for each habit that has a reminder time, and skips those that don't`() = runTest {
+    val reminderScheduler = FakeReminderScheduler()
+    val habitsWithReminders =
+      listOf(
+        HabitSpec(name = "Run 3km", detail = null, reminderTime = "06:42"),
+        HabitSpec(name = "Read", detail = null, reminderTime = null),
+      )
+
+    val result =
+      repository(reminderScheduler = reminderScheduler)
+        .createChallenge(
+          challengerUserId = "user-1",
+          witnessUserId = "user-2",
+          title = "Morning reset",
+          habits = habitsWithReminders,
+          durationDays = 21,
+          graceDaysTotal = 1,
+        )
+
+    val success = result as ChallengeCreationResult.Success
+    val runHabitId = success.habits.first { it.name == "Run 3km" }.habitId
+    assertEquals(listOf(Triple(runHabitId, "Run 3km", "06:42")), reminderScheduler.scheduled)
   }
 
   @Test

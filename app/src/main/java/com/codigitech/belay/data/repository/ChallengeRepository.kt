@@ -6,6 +6,7 @@ import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.HabitEntity
+import com.codigitech.belay.data.notification.ReminderScheduler
 import com.codigitech.belay.data.remote.ChallengeRemoteDataSource
 import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import java.time.Instant
@@ -55,6 +56,7 @@ constructor(
   private val habitRemoteDataSource: HabitRemoteDataSource,
   private val clock: BelayClock,
   private val idGenerator: IdGenerator,
+  private val reminderScheduler: ReminderScheduler,
 ) : ChallengeRepository {
 
   override suspend fun createChallenge(
@@ -116,6 +118,10 @@ constructor(
     runCatching { habitRemoteDataSource.upsertAll(habitEntities) }
     challengeDao.upsert(challenge)
     habitDao.upsertAll(habitEntities)
+
+    habitEntities.forEach { habit ->
+      habit.reminderTime?.let { reminderScheduler.scheduleHabitReminder(habit.habitId, habit.name, it) }
+    }
 
     return ChallengeCreationResult.Success(challenge, habitEntities)
   }

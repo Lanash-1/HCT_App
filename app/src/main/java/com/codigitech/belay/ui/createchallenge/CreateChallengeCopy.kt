@@ -9,6 +9,8 @@ object CreateChallengeCopy {
   const val HABIT_NAME_HINT = "Habit"
   const val HABIT_DETAIL_HINT = "Detail (optional)"
   const val ADD_HABIT = "+  Add a habit"
+  const val SET_REMINDER = "Set a reminder"
+  const val CLEAR_REMINDER = "Clear"
   const val DURATION_SECTION = "How long"
   const val WITNESS_SECTION = "Who's watching"
   const val WITNESS_EMPTY = "No one paired yet — pair with a witness from onboarding first."
@@ -20,4 +22,16 @@ object CreateChallengeCopy {
   fun habitCount(count: Int): String = "$count of 5"
 
   fun durationLabel(days: Int): String = "$days days"
+
+  /** Renders a stored "HH:mm" as e.g. "6:42 am", or the set-a-reminder prompt when there isn't one yet. */
+  fun reminderLabel(time: String?): String {
+    if (time == null) return SET_REMINDER
+    val (hour24, minute) = time.split(":").let { it[0].toInt() to it[1].toInt() }
+    val period = if (hour24 < 12) "am" else "pm"
+    val hour12 = when (val h = hour24 % 12) {
+      0 -> 12
+      else -> h
+    }
+    return "%d:%02d %s".format(hour12, minute, period)
+  }
 }

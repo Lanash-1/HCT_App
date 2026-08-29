@@ -216,6 +216,36 @@ class CreateChallengeViewModelTest {
   }
 
   @Test
+  fun `onHabitReminderTimeChange sets the reminder time for that habit row only`() {
+    val viewModel = viewModel()
+    viewModel.addHabit()
+
+    viewModel.onHabitReminderTimeChange(0, "06:42")
+
+    assertEquals(listOf(HabitInput(reminderTime = "06:42"), HabitInput()), viewModel.uiState.value.habits)
+  }
+
+  @Test
+  fun `submit carries each habit's reminder time into its HabitSpec`() = runTest {
+    val challengeRepository = FakeChallengeRepository()
+    val viewModel = viewModel(challengeRepository = challengeRepository)
+    viewModel.onTitleChange("Morning reset")
+    viewModel.onHabitNameChange(0, "Run 3km")
+    viewModel.onHabitReminderTimeChange(0, "06:42")
+    viewModel.addHabit()
+    viewModel.onHabitNameChange(1, "Read") // no reminder set
+    viewModel.selectDuration(21)
+    viewModel.selectWitness("user-2")
+
+    viewModel.submit()
+
+    assertEquals(
+      listOf(HabitSpec("Run 3km", null, reminderTime = "06:42"), HabitSpec("Read", null)),
+      challengeRepository.lastCall?.get(3),
+    )
+  }
+
+  @Test
   fun `submit surfaces a repository-level rejection instead of marking done`() = runTest {
     val viewModel = viewModel(challengeRepository = FakeChallengeRepository(result = ChallengeCreationResult.TooManyHabits))
     viewModel.onTitleChange("Morning reset")
