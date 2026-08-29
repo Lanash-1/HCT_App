@@ -13,6 +13,7 @@ import org.junit.Test
 
 private class FakeAuthRepository(
   private var currentUserId: String? = null,
+  private var currentUserEmail: String? = null,
   private val signUpResult: AuthOutcome = AuthOutcome.Success("uid-1"),
   private val logInResult: AuthOutcome = AuthOutcome.Success("uid-1"),
 ) : AuthRepository {
@@ -23,6 +24,8 @@ private class FakeAuthRepository(
   override suspend fun logIn(email: String, password: String): AuthOutcome = logInResult
 
   override fun currentUserId(): String? = currentUserId
+
+  override fun currentUserEmail(): String? = currentUserEmail
 
   override fun logOut() {
     loggedOut = true

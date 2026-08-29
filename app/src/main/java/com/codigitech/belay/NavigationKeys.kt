@@ -5,4 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Auth : NavKey
 
+@Serializable data object Onboarding : NavKey
+
 @Serializable data object Today : NavKey

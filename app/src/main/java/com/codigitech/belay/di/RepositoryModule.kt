@@ -10,11 +10,18 @@ import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.HabitRepositoryImpl
 import com.codigitech.belay.data.repository.InteractionRepository
 import com.codigitech.belay.data.repository.InteractionRepositoryImpl
+import com.codigitech.belay.data.remote.FirestorePairingRemoteDataSource
+import com.codigitech.belay.data.remote.FirestoreUserRemoteDataSource
+import com.codigitech.belay.data.remote.PairingRemoteDataSource
+import com.codigitech.belay.data.remote.UserRemoteDataSource
 import com.codigitech.belay.data.repository.PairingRepository
 import com.codigitech.belay.data.repository.PairingRepositoryImpl
 import com.codigitech.belay.data.repository.RecapRepository
 import com.codigitech.belay.data.repository.RecapRepositoryImpl
+import com.codigitech.belay.data.repository.UserRepository
+import com.codigitech.belay.data.repository.UserRepositoryImpl
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -26,6 +33,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
   @Binds abstract fun bindPairingRepository(impl: PairingRepositoryImpl): PairingRepository
+
+  @Binds abstract fun bindPairingRemoteDataSource(impl: FirestorePairingRemoteDataSource): PairingRemoteDataSource
+
+  @Binds abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+  @Binds abstract fun bindUserRemoteDataSource(impl: FirestoreUserRemoteDataSource): UserRemoteDataSource
 
   @Binds abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
 
@@ -41,5 +54,7 @@ abstract class RepositoryModule {
 
   companion object {
     @Provides @Singleton fun providePairCodeGenerator(): PairCodeGenerator = PairCodeGenerator()
+
+    @Provides @Singleton fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
   }
 }
