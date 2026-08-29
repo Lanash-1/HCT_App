@@ -19,6 +19,7 @@ googleServices = "4.5.0"
 firebaseCrashlyticsPlugin = "3.0.8"
 firebaseBom = "34.18.0"
 ksp = "2.3.11"
+catalystAndroidSdk = "3.0.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -47,6 +48,7 @@ hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", ve
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+catalyst-android-sdk = { module = "com.zoho.catalyst:android-sdk", version.ref = "catalystAndroidSdk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

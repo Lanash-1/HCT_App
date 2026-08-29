@@ -15,7 +15,8 @@
 local.properties
 
 # Per-environment secrets (see *.example templates)
-secrets.properties
 app/src/dev/google-services.json
 app/src/prod/google-services.json
 google-services.json
+app/src/dev/assets/app_configuration_development.properties
+app/src/prod/assets/app_configuration_production.properties

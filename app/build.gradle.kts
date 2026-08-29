@@ -32,13 +32,17 @@ android {
 
     flavorDimensions += "env"
     productFlavors {
+        // Both flavors share the applicationId: the dev Firebase Android app is registered
+        // under the bare package name, and Google Services matches applicationId exactly —
+        // an applicationIdSuffix here would break dev's Firebase/Crashlytics wiring.
         create("dev") {
             dimension = "env"
-            applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
+            buildConfigField("String", "CATALYST_ENV", "\"DEVELOPMENT\"")
         }
         create("prod") {
             dimension = "env"
+            buildConfigField("String", "CATALYST_ENV", "\"PRODUCTION\"")
         }
     }
 
@@ -55,7 +59,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
@@ -117,4 +121,7 @@ dependencies {
   // Crash reporting
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.crashlytics)
+
+  // Backend (Zoho Catalyst)
+  implementation(libs.catalyst.android.sdk)
 }
