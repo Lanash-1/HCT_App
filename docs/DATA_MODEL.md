@@ -1,0 +1,112 @@
+# Belay — Data Model (Zoho Catalyst Data Store)
+
+**Status:** Draft — refine once Catalyst project is created and TDD on Repositories surfaces gaps.
+
+This is a NoSQL schema for Catalyst Data Store. Tables below are a starting shape, not final column types — expect them to shift slightly as streak/grace-day logic gets written test-first (see [TECH_STACK.md §7](TECH_STACK.md#7-testing--test-driven-development)).
+
+## Tables
+
+### `users`
+| Field | Type | Notes |
+|---|---|---|
+| `user_id` | string (Catalyst Auth UID) | primary identifier |
+| `display_name` | string | |
+| `pair_code` | string | short code shown in onboarding (e.g. `7K42`) |
+| `default_mode` | enum(`challenger`,`witness`) | last-used mode, restored on app open |
+| `theme_pref` | enum(`light`,`dark`,`system`) | |
+| `notif_daily_reminder_time` | string (HH:mm) | |
+| `notif_allow_nudge` | boolean | "let X nudge me" toggle |
+| `created_at` | datetime | |
+
+### `challenges`
+| Field | Type | Notes |
+|---|---|---|
+| `challenge_id` | string | primary key |
+| `challenger_user_id` | string | FK → `users` |
+| `witness_user_id` | string | FK → `users` |
+| `title` | string | e.g. "Morning reset" |
+| `duration_days` | int | one of 7 / 21 / 30 / 66 |
+| `grace_days_total` | int | set at creation, 0–3 per design |
+| `grace_days_used` | int | |
+| `start_date` | date | |
+| `status` | enum(`active`,`completed`,`abandoned`) | |
+
+### `habits`
+| Field | Type | Notes |
+|---|---|---|
+| `habit_id` | string | primary key |
+| `challenge_id` | string | FK → `challenges` |
+| `name` | string | e.g. "Run 3 km" |
+| `detail` | string | e.g. "before 8 am" |
+| `icon` | string | short glyph/initial per design |
+| `reminder_time` | string (HH:mm), nullable | per-habit reminder — PRD §6.1 |
+| `sort_order` | int | max 5 habits per challenge, enforced at write time |
+| `current_streak` | int | denormalized for fast read; recalculated by Catalyst Function on each check-in |
+
+### `check_ins`
+| Field | Type | Notes |
+|---|---|---|
+| `check_in_id` | string | primary key |
+| `habit_id` | string | FK → `habits` |
+| `challenge_id` | string | denormalized for query-by-day |
+| `date` | date | one row per habit per day |
+| `done` | boolean | |
+| `checked_at` | datetime, nullable | timestamp of the toggle-to-done event |
+| `client_idempotency_key` | string | dedupes retried offline-queue writes (see [TECH_STACK.md §5](TECH_STACK.md#5-offline-handling)) |
+
+### `pairings`
+| Field | Type | Notes |
+|---|---|---|
+| `pairing_id` | string | primary key |
+| `pair_code` | string | matches `users.pair_code` at time of pairing |
+| `from_user_id` | string | who initiated |
+| `to_user_id` | string, nullable | filled once paired |
+| `status` | enum(`pending`,`paired`,`expired`) | |
+| `created_at` | datetime | |
+
+### `interactions`
+Cheer/nudge events — also doubles as the "Log" list shown on the witness detail screen.
+
+| Field | Type | Notes |
+|---|---|---|
+| `interaction_id` | string | primary key |
+| `challenge_id` | string | FK → `challenges` |
+| `from_user_id` | string | witness (cheer/nudge) or challenger (implicit, via check-in) |
+| `type` | enum(`cheer`,`nudge`,`checkin_summary`) | |
+| `date` | date | |
+| `message` | string | witness-typed free text (max ~140 chars), not preset/tone-resolved copy — see [TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages) |
+| `created_at` | datetime | |
+
+Nudge is rate-limited to 1/day per challenge — enforced in the Catalyst Function that writes this table, not just client-side.
+
+### `recaps`
+Generated weekly by a Catalyst Cron job (Sunday), matching the shareable recap screen.
+
+| Field | Type | Notes |
+|---|---|---|
+| `recap_id` | string | primary key |
+| `challenge_id` | string | FK → `challenges` |
+| `week_start` | date | |
+| `week_end` | date | |
+| `check_ins_total` | int | |
+| `check_ins_possible` | int | `habits.count * 7` |
+| `perfect_days` | int | |
+| `per_habit_summary` | JSON | `[{habit_id, name, score, daily_cells}]` — mirrors the design's 7-cell grid |
+| `generated_at` | datetime | |
+
+## Relationships at a glance
+
+```
+users 1──* challenges (as challenger)
+users 1──* challenges (as witness)
+challenges 1──* habits (max 5)
+habits 1──* check_ins (1 per day)
+challenges 1──* interactions (cheer/nudge log)
+challenges 1──* recaps (weekly)
+users 1──* pairings (initiated)
+```
+
+## Notes for implementation
+
+- `current_streak` on `habits` and any other denormalized/derived fields (perfect-day counts, grace remaining) are **written only by Catalyst Functions**, never computed client-side and pushed up — this keeps the scoring logic single-sourced, per [TECH_STACK.md §3](TECH_STACK.md#3-backend-zoho-catalyst).
+- Local Room schema mirrors this shape for the subset relevant to the signed-in user (their own challenge's habits/check-ins, plus each witnessed challenger's read-only view).
