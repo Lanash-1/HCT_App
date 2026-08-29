@@ -28,6 +28,7 @@ This is a NoSQL schema for Catalyst Data Store. Tables below are a starting shap
 | `duration_days` | int | one of 7 / 21 / 30 / 66 |
 | `grace_days_total` | int | set at creation, 0–3 per design |
 | `grace_days_used` | int | |
+| `perfect_days` | int | running total for the whole challenge (PRD §4.3 "perfect days belong to the challenge"); written only by the `dayRollover` Catalyst Function — added once implementation (the day-rollover Function) surfaced that the original draft had nowhere to store this |
 | `start_date` | date | |
 | `status` | enum(`active`,`completed`,`abandoned`) | |
 

@@ -39,7 +39,7 @@ Chosen because you're already inside the Zoho ecosystem and Catalyst gives a man
 
 **Separate dev and production Catalyst projects from the start.** A Catalyst project has already been created (record its project ID/org below once at hand — placeholder until confirmed). A second project for production is created before first Play Store submission. The app build (via build variants/flavors — `dev` / `prod`) points at the matching Catalyst project + Firebase project per environment, so active development never touches production data once it exists.
 
-- **Dev Catalyst project:** *(record project ID here once available)*
+- **Dev Catalyst project:** `HCT-App`, project ID `52818000000072001`, org `60079565648` (`hct-app-60079565648.development.catalystserverless.in`). Functions live in [`backend/`](../backend) (see `backend/.catalystrc`); deploy with `catalyst deploy --only functions` from that directory.
 - **Prod Catalyst project:** not yet created — create before first release build.
 
 ### Services in use
@@ -144,7 +144,8 @@ A default placeholder/prompt (e.g. "Say something...") is shown in the compose f
 
 ## Open questions
 
-- Record the dev Catalyst project ID/org (§Environments) once at hand; create the prod Catalyst project before first release build.
+- **Data Store tables don't exist yet in the console.** The three Catalyst Functions in `backend/functions/` (dayRollover, cheerNudge, weeklyRecap) are written and deployed against the table/column names in [DATA_MODEL.md](DATA_MODEL.md), but table creation isn't available from the Catalyst CLI — the `users`/`challenges`/`habits`/`check_ins`/`pairings`/`interactions`/`recaps` tables need to be created in the console (Data Store → Create a new Table) with matching column names before these Functions can run against real data.
+- Create the prod Catalyst project before first release build.
 - Confirm final Play Console developer account name once the app entry is created there.
 - Confirm the domain to use for App Links verification (§11) — needed before deep-link pairing can ship.
 - Decide whether cheer/nudge gets optional quick-pick shortcuts alongside free text (§12), or free text only.

@@ -31,6 +31,7 @@ data class ChallengeEntity(
   val durationDays: Int,
   val graceDaysTotal: Int,
   val graceDaysUsed: Int,
+  val perfectDays: Int, // running total for the whole challenge, written only by the dayRollover Catalyst Function
   val startDate: Long, // epoch day
   val status: String, // "active" | "completed" | "abandoned"
 )

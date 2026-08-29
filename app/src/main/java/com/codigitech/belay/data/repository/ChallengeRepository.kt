@@ -75,6 +75,7 @@ constructor(
         durationDays = durationDays,
         graceDaysTotal = graceDaysTotal,
         graceDaysUsed = 0,
+        perfectDays = 0,
         startDate = startDate,
         status = "active",
       )
