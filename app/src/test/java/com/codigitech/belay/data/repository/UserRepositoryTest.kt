@@ -138,4 +138,35 @@ class UserRepositoryTest {
 
     assertEquals("witness", dao.get("user-1")?.defaultMode)
   }
+
+  @Test
+  fun `getProfile fetches and mirrors a remote profile without creating one`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource()
+    val other = UserEntity("user-2", "bala", "BBBB", "challenger", "system", null, true, 2L)
+    remote.stored["user-2"] = other
+
+    val profile = repository(dao, remote).getProfile("user-2")
+
+    assertEquals(other, profile)
+    assertEquals(other, dao.get("user-2"))
+  }
+
+  @Test
+  fun `getProfile returns null for a user that doesn't exist anywhere`() = runTest {
+    val profile = repository(FakeUserDao(), FakeUserRemoteDataSource()).getProfile("nobody")
+
+    assertEquals(null, profile)
+  }
+
+  @Test
+  fun `getProfile falls back to the local cache when Firestore is unreachable`() = runTest {
+    val dao = FakeUserDao()
+    val cached = UserEntity("user-2", "bala", "BBBB", "challenger", "system", null, true, 2L)
+    dao.upsert(cached)
+
+    val profile = repository(dao, FakeUserRemoteDataSource(unreachable = true)).getProfile("user-2")
+
+    assertEquals(cached, profile)
+  }
 }

@@ -44,6 +44,8 @@ private class FakeUserRepository : UserRepository {
     modeUpdates += userId to mode
   }
 
+  override suspend fun getProfile(userId: String): UserEntity? = null
+
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = MutableStateFlow(null)
 }
 
@@ -59,6 +61,8 @@ private class FakePairingRepository(
     completedWith = pairCode to toUserId
     return completeResult
   }
+
+  override suspend fun getPairedContactIds(userId: String): List<String> = emptyList()
 }
 
 class OnboardingViewModelTest {

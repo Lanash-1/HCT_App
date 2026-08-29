@@ -9,6 +9,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.codigitech.belay.ui.auth.AuthRoute
+import com.codigitech.belay.ui.createchallenge.CreateChallengeRoute
+import com.codigitech.belay.ui.onboarding.OnboardingRole
 import com.codigitech.belay.ui.onboarding.OnboardingRoute
 import com.codigitech.belay.ui.today.TodayScreen
 
@@ -32,7 +34,16 @@ fun MainNavigation() {
         }
         entry<Onboarding> {
           OnboardingRoute(
-            onContinue = {
+            onContinue = { role ->
+              backStack.clear()
+              backStack.add(if (role == OnboardingRole.Challenger) CreateChallenge else Today)
+            },
+            modifier = Modifier.safeDrawingPadding().padding(16.dp),
+          )
+        }
+        entry<CreateChallenge> {
+          CreateChallengeRoute(
+            onDone = {
               backStack.clear()
               backStack.add(Today)
             },
