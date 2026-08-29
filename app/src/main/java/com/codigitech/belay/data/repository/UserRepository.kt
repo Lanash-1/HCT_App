@@ -14,6 +14,12 @@ interface UserRepository {
 
   suspend fun setDefaultMode(userId: String, mode: String)
 
+  suspend fun setThemePref(userId: String, pref: String)
+
+  suspend fun setDailyReminderTime(userId: String, time: String?)
+
+  suspend fun setNudgeAllowed(userId: String, allowed: Boolean)
+
   /** Looks up any user's profile (e.g. a paired contact's display name) — does not create one if missing. */
   suspend fun getProfile(userId: String): UserEntity?
 
@@ -53,9 +59,17 @@ constructor(
     return created
   }
 
-  override suspend fun setDefaultMode(userId: String, mode: String) {
+  override suspend fun setDefaultMode(userId: String, mode: String) = update(userId) { it.copy(defaultMode = mode) }
+
+  override suspend fun setThemePref(userId: String, pref: String) = update(userId) { it.copy(themePref = pref) }
+
+  override suspend fun setDailyReminderTime(userId: String, time: String?) = update(userId) { it.copy(notifDailyReminderTime = time) }
+
+  override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = update(userId) { it.copy(notifAllowNudge = allowed) }
+
+  private suspend fun update(userId: String, transform: (UserEntity) -> UserEntity) {
     val current = runCatching { remoteDataSource.get(userId) }.getOrNull() ?: userDao.get(userId) ?: return
-    val updated = current.copy(defaultMode = mode)
+    val updated = transform(current)
     runCatching { remoteDataSource.upsert(updated) }
     userDao.upsert(updated)
   }

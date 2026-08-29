@@ -46,6 +46,12 @@ private class FakeUserRepositoryForCreate(private val profiles: Map<String, Stri
 
   override suspend fun setDefaultMode(userId: String, mode: String) = error("not used")
 
+  override suspend fun setThemePref(userId: String, pref: String) = error("not used")
+
+  override suspend fun setDailyReminderTime(userId: String, time: String?) = error("not used")
+
+  override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
+
   override suspend fun getProfile(userId: String): UserEntity? =
     profiles[userId]?.let { UserEntity(userId, it, "AAAA", "witness", "system", null, true, 0L) }
 

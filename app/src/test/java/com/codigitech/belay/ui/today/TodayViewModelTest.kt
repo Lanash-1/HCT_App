@@ -92,6 +92,12 @@ private class FakeUserRepositoryForToday(private val profiles: Map<String, UserE
 
   override suspend fun setDefaultMode(userId: String, mode: String) = error("not used")
 
+  override suspend fun setThemePref(userId: String, pref: String) = error("not used")
+
+  override suspend fun setDailyReminderTime(userId: String, time: String?) = error("not used")
+
+  override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
+
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = error("not used")

@@ -127,6 +127,7 @@ dependencies {
   implementation(libs.firebase.firestore)
   implementation(libs.firebase.functions)
   implementation(libs.kotlinx.coroutines.play.services)
+  implementation(libs.kotlinx.serialization.json)
 
   // Local persistence (offline cache + sync queue, see docs/TECH_STACK.md §5)
   implementation(libs.androidx.room.runtime)

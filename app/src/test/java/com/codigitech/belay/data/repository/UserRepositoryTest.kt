@@ -129,6 +129,45 @@ class UserRepositoryTest {
   }
 
   @Test
+  fun `setThemePref updates the theme preference remotely and locally`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource()
+    val repo = repository(dao, remote)
+    repo.ensureProfile(userId = "user-1", displayName = "ana")
+
+    repo.setThemePref(userId = "user-1", pref = "dark")
+
+    assertEquals("dark", remote.stored["user-1"]?.themePref)
+    assertEquals("dark", dao.get("user-1")?.themePref)
+  }
+
+  @Test
+  fun `setDailyReminderTime updates the reminder time remotely and locally`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource()
+    val repo = repository(dao, remote)
+    repo.ensureProfile(userId = "user-1", displayName = "ana")
+
+    repo.setDailyReminderTime(userId = "user-1", time = "07:00")
+
+    assertEquals("07:00", remote.stored["user-1"]?.notifDailyReminderTime)
+    assertEquals("07:00", dao.get("user-1")?.notifDailyReminderTime)
+  }
+
+  @Test
+  fun `setNudgeAllowed updates the nudge-allowed flag remotely and locally`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource()
+    val repo = repository(dao, remote)
+    repo.ensureProfile(userId = "user-1", displayName = "ana")
+
+    repo.setNudgeAllowed(userId = "user-1", allowed = false)
+
+    assertEquals(false, remote.stored["user-1"]?.notifAllowNudge)
+    assertEquals(false, dao.get("user-1")?.notifAllowNudge)
+  }
+
+  @Test
   fun `setDefaultMode still updates the local cache when Firestore is unreachable`() = runTest {
     val dao = FakeUserDao()
     dao.upsert(UserEntity("user-1", "ana", "AAAA", "challenger", "system", null, true, 1L))
