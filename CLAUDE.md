@@ -9,6 +9,7 @@ Android habit-accountability app. Challenger commits to daily habits; a single w
 - [docs/DATA_MODEL.md](docs/DATA_MODEL.md) — Firestore schema
 - [docs/ROADMAP.md](docs/ROADMAP.md) — explicitly out-of-scope-for-v1 items; don't build these unless asked
 - [docs/PRIVACY_POLICY.md](docs/PRIVACY_POLICY.md) — draft policy; keep in sync with DATA_MODEL.md if the data model changes
+- [docs/PLAY_DATA_SAFETY.md](docs/PLAY_DATA_SAFETY.md) — maps the privacy policy onto Play Console's Data Safety questionnaire; keep both in sync
 - Design source of truth: [`app-logo-and-names/project/Habit Challenge.dc.html`](app-logo-and-names/project/Habit%20Challenge.dc.html) — pixel/interaction spec. Recreate the visual output in Compose; don't copy the prototype's HTML/JS structure.
 
 ## Stack summary

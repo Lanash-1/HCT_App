@@ -2,7 +2,7 @@
 
 **Status:** Draft for review — not legal advice. Have this checked before publishing/hosting it or submitting to Play Console. Update the bracketed placeholders before use.
 
-**Last updated:** [date]
+**Last updated:** 2026-08-29
 
 ## Who this covers
 
@@ -40,13 +40,13 @@ Each of these processes data on our behalf under their own respective privacy/da
 ## Data retention & deletion
 
 - Your data is retained for as long as your account is active.
-- You can delete your account and associated data in-app, from **Profile → [Settings → Delete account]** (matches the in-app deletion path required by Play policy — see [PRD.md §6.3](PRD.md#6-v1-scope-beyond-the-original-design-proposed)). This removes your account, your challenges/habits/check-ins, and your pairing relationships.
+- You can delete your account and associated data in-app, from **Profile → Account → Delete account** (matches the in-app deletion path required by Play policy — see [PRD.md §6.3](PRD.md#6-v1-scope-beyond-the-original-design-proposed)). This removes your account, your challenges/habits/check-ins, and your pairing relationships.
 - If you are someone's witness, your identity is also removed from their challenge record when you delete your account.
-- [ Specify retention period for backups/logs after deletion, e.g. "up to 30 days," once confirmed. ]
+- Deletion from our database (Firestore) and your sign-in account (Firebase Authentication) happens immediately when you confirm the deletion — there's no separate backup or soft-delete window on our side. Crash/error diagnostics (Firebase Crashlytics) aren't linked to your deleted account, but persist for whatever retention period Firebase's own policies set for that service, outside our control.
 
 ## Children's privacy
 
-Belay is not directed at children under 13 [confirm/adjust age threshold per your target market and Play Console content rating]. We do not knowingly collect data from children under this age.
+Belay is not directed at children under 13. We do not knowingly collect data from children under this age. [ Confirm this threshold matches the Play Console content rating and any additional regional requirements (e.g. GDPR-K/COPPA) before publishing. ]
 
 ## Security
 
@@ -58,7 +58,7 @@ We'll update the "Last updated" date above when this policy changes, and notify 
 
 ## Contact
 
-[ Contact email/address to be added before publishing — required by Play Console. ]
+lanash.db@zohocorp.com [ Confirm this is the address you want public before publishing — Play Console requires a working contact for the listing; many developers use a dedicated support address rather than a personal one. ]
 
 ---
 
