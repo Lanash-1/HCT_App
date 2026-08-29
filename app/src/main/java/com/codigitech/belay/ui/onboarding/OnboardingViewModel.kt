@@ -75,9 +75,9 @@ constructor(
       when (pairingRepository.completePairing(code, userId)) {
         is PairingResult.Success -> _uiState.update { it.copy(isLoading = false, pairingSuccess = true, pairingError = null) }
         PairingResult.NotFound ->
-          _uiState.update {
-            it.copy(isLoading = false, pairingSuccess = false, pairingError = "That code isn't valid, or it's already been used.")
-          }
+          _uiState.update { it.copy(isLoading = false, pairingSuccess = false, pairingError = OnboardingCopy.PAIR_CODE_INVALID) }
+        PairingResult.NetworkError ->
+          _uiState.update { it.copy(isLoading = false, pairingSuccess = false, pairingError = OnboardingCopy.PAIR_CODE_NETWORK_ERROR) }
       }
     }
   }

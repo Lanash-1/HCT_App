@@ -27,10 +27,13 @@ constructor(
 ) : UserRepository {
 
   override suspend fun ensureProfile(userId: String, displayName: String): UserEntity {
-    remoteDataSource.get(userId)?.let {
+    // Firestore reads/writes can fail (offline, a flaky connection right at app start) — Room is
+    // the offline-tolerant mirror, so a remote hiccup should never crash onboarding.
+    runCatching { remoteDataSource.get(userId) }.getOrNull()?.let {
       userDao.upsert(it)
       return it
     }
+    userDao.get(userId)?.let { return it }
     val created =
       UserEntity(
         userId = userId,
@@ -42,15 +45,15 @@ constructor(
         notifAllowNudge = true,
         createdAt = clock.nowEpochMillis(),
       )
-    remoteDataSource.upsert(created)
+    runCatching { remoteDataSource.upsert(created) }
     userDao.upsert(created)
     return created
   }
 
   override suspend fun setDefaultMode(userId: String, mode: String) {
-    val current = remoteDataSource.get(userId) ?: userDao.get(userId) ?: return
+    val current = runCatching { remoteDataSource.get(userId) }.getOrNull() ?: userDao.get(userId) ?: return
     val updated = current.copy(defaultMode = mode)
-    remoteDataSource.upsert(updated)
+    runCatching { remoteDataSource.upsert(updated) }
     userDao.upsert(updated)
   }
 
