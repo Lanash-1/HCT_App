@@ -67,6 +67,15 @@ constructor(
     if (durationDays !in VALID_DURATIONS_DAYS) return ChallengeCreationResult.InvalidDuration
     if (graceDaysTotal !in MIN_GRACE_DAYS..MAX_GRACE_DAYS) return ChallengeCreationResult.InvalidGraceDays
 
+    // A challenger has at most one active challenge at a time — starting a new one supersedes
+    // any existing one rather than leaving two rows with status='active' (which would make
+    // observeActiveForChallenger's "the active challenge" ambiguous).
+    challengeDao.getActiveForChallenger(challengerUserId).forEach { previouslyActive ->
+      val abandoned = previouslyActive.copy(status = "abandoned")
+      challengeDao.update(abandoned)
+      runCatching { challengeRemoteDataSource.upsert(abandoned) }
+    }
+
     val challengeId = idGenerator.newId()
     val startDate = Instant.ofEpochMilli(clock.nowEpochMillis()).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
 

@@ -29,10 +29,15 @@ private class FakeChallengeDao : ChallengeDao {
   override fun observe(challengeId: String): Flow<ChallengeEntity?> = MutableStateFlow(stored[challengeId])
 
   override fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?> =
-    MutableStateFlow(stored.values.firstOrNull { it.challengerUserId == userId && it.status == "active" })
+    MutableStateFlow(
+      stored.values.filter { it.challengerUserId == userId && it.status == "active" }.maxByOrNull { it.startDate }
+    )
 
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> =
     MutableStateFlow(stored.values.filter { it.witnessUserId == userId && it.status == "active" })
+
+  override suspend fun getActiveForChallenger(userId: String): List<ChallengeEntity> =
+    stored.values.filter { it.challengerUserId == userId && it.status == "active" }
 }
 
 private class FakeHabitDao : HabitDao {
@@ -223,5 +228,70 @@ class ChallengeRepositoryTest {
 
     assertEquals(ChallengeCreationResult.InvalidGraceDays, tooMany)
     assertEquals(ChallengeCreationResult.InvalidGraceDays, negative)
+  }
+
+  @Test
+  fun `observeActiveForChallenger returns the most recently started challenge when more than one is active`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val older = ChallengeEntity("challenge-old", "user-1", "user-2", "Old", 21, 1, 0, 0, startDate = 1L, status = "active")
+    val newer = ChallengeEntity("challenge-new", "user-1", "user-2", "New", 21, 1, 0, 0, startDate = 5L, status = "active")
+    challengeDao.upsert(older)
+    challengeDao.upsert(newer)
+
+    val active = repository(challengeDao).observeActiveForChallenger("user-1")
+
+    assertEquals(newer, (active as MutableStateFlow).value)
+  }
+
+  @Test
+  fun `creating a challenge abandons the challenger's existing active challenge, remotely and locally`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val habitDao = FakeHabitDao()
+    val challengeRemote = FakeChallengeRemoteDataSource()
+    val habitRemote = FakeHabitRemoteDataSource()
+    val existing = ChallengeEntity("challenge-old", "user-1", "user-2", "Old", 21, 1, 0, 0, startDate = 1L, status = "active")
+    challengeDao.upsert(existing)
+    challengeRemote.stored[existing.challengeId] = existing
+
+    val result =
+      repository(challengeDao, habitDao, challengeRemote, habitRemote)
+        .createChallenge(
+          challengerUserId = "user-1",
+          witnessUserId = "user-2",
+          title = "New challenge",
+          habits = validHabits,
+          durationDays = 21,
+          graceDaysTotal = 1,
+        )
+
+    assertTrue(result is ChallengeCreationResult.Success)
+    assertEquals("abandoned", challengeDao.stored["challenge-old"]?.status)
+    assertEquals("abandoned", challengeRemote.stored["challenge-old"]?.status)
+    assertEquals("active", challengeDao.stored[(result as ChallengeCreationResult.Success).challenge.challengeId]?.status)
+  }
+
+  @Test
+  fun `abandoning the old challenge still succeeds locally even if the remote write fails`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val existing = ChallengeEntity("challenge-old", "user-1", "user-2", "Old", 21, 1, 0, 0, startDate = 1L, status = "active")
+    challengeDao.upsert(existing)
+
+    val result =
+      repository(
+          challengeDao,
+          challengeRemote = FakeChallengeRemoteDataSource(unreachable = true),
+          habitRemote = FakeHabitRemoteDataSource(unreachable = true),
+        )
+        .createChallenge(
+          challengerUserId = "user-1",
+          witnessUserId = "user-2",
+          title = "New challenge",
+          habits = validHabits,
+          durationDays = 21,
+          graceDaysTotal = 1,
+        )
+
+    assertTrue(result is ChallengeCreationResult.Success)
+    assertEquals("abandoned", challengeDao.stored["challenge-old"]?.status)
   }
 }

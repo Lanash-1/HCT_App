@@ -31,11 +31,15 @@ interface ChallengeDao {
 
   @Query("SELECT * FROM challenges WHERE challengeId = :challengeId") fun observe(challengeId: String): Flow<ChallengeEntity?>
 
-  @Query("SELECT * FROM challenges WHERE challengerUserId = :userId AND status = 'active' LIMIT 1")
+  @Query("SELECT * FROM challenges WHERE challengerUserId = :userId AND status = 'active' ORDER BY startDate DESC LIMIT 1")
   fun observeActiveForChallenger(userId: String): Flow<ChallengeEntity?>
 
   @Query("SELECT * FROM challenges WHERE witnessUserId = :userId AND status = 'active'")
   fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>>
+
+  /** Used by ChallengeRepositoryImpl.createChallenge to abandon any prior active challenge before starting a new one. */
+  @Query("SELECT * FROM challenges WHERE challengerUserId = :userId AND status = 'active'")
+  suspend fun getActiveForChallenger(userId: String): List<ChallengeEntity>
 }
 
 @Dao
