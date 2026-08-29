@@ -12,7 +12,7 @@ import com.codigitech.belay.ui.auth.AuthRoute
 import com.codigitech.belay.ui.createchallenge.CreateChallengeRoute
 import com.codigitech.belay.ui.onboarding.OnboardingRole
 import com.codigitech.belay.ui.onboarding.OnboardingRoute
-import com.codigitech.belay.ui.today.TodayScreen
+import com.codigitech.belay.ui.today.TodayRoute
 
 @Composable
 fun MainNavigation() {
@@ -50,7 +50,7 @@ fun MainNavigation() {
             modifier = Modifier.safeDrawingPadding().padding(16.dp),
           )
         }
-        entry<Today> { TodayScreen(modifier = Modifier.safeDrawingPadding().padding(16.dp)) }
+        entry<Today> { TodayRoute(modifier = Modifier.safeDrawingPadding().padding(16.dp)) }
       },
   )
 }

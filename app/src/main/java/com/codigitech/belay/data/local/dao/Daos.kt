@@ -57,6 +57,9 @@ interface CheckInDao {
 
   @Query("SELECT * FROM check_ins WHERE habitId = :habitId ORDER BY date DESC")
   fun observeForHabit(habitId: String): Flow<List<CheckInEntity>>
+
+  @Query("SELECT * FROM check_ins WHERE habitId = :habitId AND date = :date")
+  suspend fun get(habitId: String, date: Long): CheckInEntity?
 }
 
 @Dao
