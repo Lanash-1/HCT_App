@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function challengeOf(challengeId) {
+      return get(/databases/$(database)/documents/challenges/$(challengeId)).data;
+    }
+
+    function isChallengeMember(challengeId) {
+      let c = challengeOf(challengeId);
+      return isSignedIn() && (c.challenger_user_id == request.auth.uid || c.witness_user_id == request.auth.uid);
+    }
+
+    function isChallenger(challengeId) {
+      return isSignedIn() && challengeOf(challengeId).challenger_user_id == request.auth.uid;
+    }
+
+    // A user's own profile — readable by anyone signed in (needed to show a witness's display
+    // name etc.), writable only by its owner.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if isSignedIn() &&
+        (resource.data.challenger_user_id == request.auth.uid || resource.data.witness_user_id == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.challenger_user_id == request.auth.uid;
+      // Only the challenger can update, and never the derived fields — those are Cloud-Function-only
+      // (the Admin SDK bypasses rules entirely, so this only blocks client writes).
+      allow update: if isSignedIn() && resource.data.challenger_user_id == request.auth.uid &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['grace_days_used', 'perfect_days']);
+      allow delete: if false;
+    }
+
+    // A miss/incomplete day is only ever visible to the challenger and their one witness
+    // (see CLAUDE.md) — habits/check-ins are scoped to challenge membership, not just "signed in".
+    match /habits/{habitId} {
+      allow read: if isChallengeMember(resource.data.challenge_id);
+      allow create: if isChallenger(request.resource.data.challenge_id);
+      // current_streak is Cloud-Function-only.
+      allow update: if isChallenger(resource.data.challenge_id) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['current_streak']);
+      allow delete: if false;
+    }
+
+    match /check_ins/{checkInId} {
+      allow read: if isChallengeMember(resource.data.challenge_id);
+      allow create, update: if isChallenger(request.resource.data.challenge_id);
+      allow delete: if false;
+    }
+
+    match /pairings/{pairingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.from_user_id == request.auth.uid;
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /interactions/{interactionId} {
+      allow read: if isChallengeMember(resource.data.challenge_id);
+      allow create: if isChallengeMember(request.resource.data.challenge_id) &&
+        request.resource.data.from_user_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Generated entirely by scheduled Cloud Functions.
+    match /recaps/{recapId} {
+      allow read: if isChallengeMember(resource.data.challenge_id);
+      allow write: if false;
+    }
+  }
+}

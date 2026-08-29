@@ -1,0 +1,14 @@
+{
+  "name": "belay-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Belay Firebase project config (Firestore rules/indexes, Cloud Functions in functions/)",
+  "scripts": {
+    "test": "npm --prefix functions test",
+    "emulators": "firebase emulators:start --project demo-belay",
+    "deploy": "firebase deploy --only functions,firestore"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.28.2"
+  }
+}

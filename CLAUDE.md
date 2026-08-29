@@ -58,4 +58,9 @@ Two product flavors (`dev`/`prod`, see [docs/TECH_STACK.md §Environments](docs/
 
 Firebase (Auth, Firestore, Cloud Functions, Crashlytics, FCM) is wired into the build but only activates once a real `google-services.json` is dropped in per environment (`app/src/dev/`, `app/src/prod/` — see the `.example` templates and [docs/TECH_STACK.md §9b](docs/TECH_STACK.md#9b-secrets--environment-config)); until then the plugin is skipped so the build still works.
 
-Backend Cloud Functions live in [`backend/`](backend) (Node.js, Jest, verified via the Firebase Local Emulator Suite — see [docs/TECH_STACK.md §3](docs/TECH_STACK.md#3-backend-firebase)).
+Backend Cloud Functions live in [`backend/`](backend) (Node.js, Jest — see [docs/TECH_STACK.md §3](docs/TECH_STACK.md#3-backend-firebase)):
+
+- Unit tests: `npm test` (from `backend/`)
+- Local emulator (Firestore + Functions, no login needed): `npm run emulators` (from `backend/`)
+- Deploy (needs `firebase login` + Blaze plan — see TECH_STACK.md open questions): `npm run deploy` (from `backend/`)
+- CI (`.github/workflows/backend-ci.yml`) runs `backend/functions`' Jest suite on any push/PR touching `backend/`.
