@@ -27,6 +27,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -118,6 +122,13 @@ fun OnboardingScreen(
 @Composable
 private fun RoleCard(title: String, detail: String, selected: Boolean, onClick: () -> Unit) {
   Card(
+    // Role.RadioButton, not a plain button: these are one choice between two, and a reader should
+    // say which one is currently selected (PRD §7).
+    modifier =
+      Modifier.semantics {
+        role = Role.RadioButton
+        this.selected = selected
+      },
     onClick = onClick,
     colors =
       CardDefaults.cardColors(

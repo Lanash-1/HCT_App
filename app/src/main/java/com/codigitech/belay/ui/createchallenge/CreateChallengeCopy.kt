@@ -39,4 +39,7 @@ object CreateChallengeCopy {
     }
     return "%d:%02d %s".format(hour12, minute, period)
   }
+
+  /** PRD §7 — the only label a screen reader gets for this icon-only button. */
+  const val REMOVE_HABIT_DESCRIPTION = "Remove habit"
 }

@@ -24,6 +24,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.ImageBitmap
@@ -176,7 +178,10 @@ private fun RecapCard(uiState: RecapUiState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun HabitRecapRow(row: RecapHabitRowUiState, modifier: Modifier = Modifier) {
-  Column(modifier = modifier.fillMaxWidth()) {
+  // Seven coloured boxes carry the week's shape visually and nothing at all to a screen reader,
+  // so the row is announced as one described item instead (PRD §7).
+  val description = RecapCopy.habitGridDescription(row.name, row.score, row.cells)
+  Column(modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = description }) {
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
       Text(row.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
       Text(row.score, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)

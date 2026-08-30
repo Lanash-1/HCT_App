@@ -37,4 +37,8 @@ object WitnessDetailCopy {
 
   // PRD §6.7 — a witness looking at a challenge that has already run its course.
   const val ENDED_NOTE = "This challenge has finished. Nothing left to check off."
+
+  /** PRD §7 accessibility — same reason as WatchingCopy.habitStatusDescription. */
+  fun habitStatusDescription(name: String, time: String, checkedToday: Boolean): String =
+    if (checkedToday) "$name, checked off at $time" else "$name, not checked off yet"
 }

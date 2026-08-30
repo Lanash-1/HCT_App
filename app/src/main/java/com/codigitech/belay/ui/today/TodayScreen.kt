@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
@@ -73,9 +77,11 @@ fun TodayScreen(
     }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+      val checkedCount = uiState.habits.count { it.checkedToday }
       ProgressRing(
         fraction = uiState.progressFraction,
-        label = TodayCopy.progressLabel(checked = uiState.habits.count { it.checkedToday }, total = uiState.habits.size),
+        label = TodayCopy.progressLabel(checked = checkedCount, total = uiState.habits.size),
+        description = TodayCopy.progressRingDescription(checked = checkedCount, total = uiState.habits.size),
       )
     }
 
@@ -201,10 +207,14 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProgressRing(fraction: Float, label: String, modifier: Modifier = Modifier) {
+private fun ProgressRing(fraction: Float, label: String, description: String, modifier: Modifier = Modifier) {
   val trackColor = MaterialTheme.colorScheme.surfaceVariant
   val progressColor = MaterialTheme.colorScheme.primary
-  Box(modifier = modifier.size(140.dp), contentAlignment = Alignment.Center) {
+  // The arc and the "3/5" inside it are one thing to a reader, not two (PRD §7).
+  Box(
+    modifier = modifier.size(140.dp).semantics(mergeDescendants = true) { contentDescription = description },
+    contentAlignment = Alignment.Center,
+  ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       val stroke = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
       val inset = stroke.width / 2
@@ -234,9 +244,21 @@ private fun ProgressRing(fraction: Float, label: String, modifier: Modifier = Mo
 
 @Composable
 private fun HabitRow(habit: TodayHabitUiState, onToggle: () -> Unit) {
+  val description = TodayCopy.habitRowDescription(habit.name, habit.detail, habit.streak, habit.checkedToday)
   Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-      Checkbox(checked = habit.checkedToday, onCheckedChange = { onToggle() })
+    // The whole row toggles, not just the checkbox: it's the primary action of the screen, and a
+    // 20dp checkbox is a small target to hit with a thumb (PRD §7). Semantics are set on the row
+    // so a reader announces the habit, its state and its streak as one item rather than as an
+    // unlabelled checkbox followed by loose text.
+    Row(
+      modifier =
+        Modifier.fillMaxWidth()
+          .toggleable(value = habit.checkedToday, role = Role.Checkbox, onValueChange = { onToggle() })
+          .padding(12.dp)
+          .semantics(mergeDescendants = true) { contentDescription = description },
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Checkbox(checked = habit.checkedToday, onCheckedChange = null)
       Column(modifier = Modifier.weight(1f)) {
         Text(habit.name, style = MaterialTheme.typography.titleSmall)
         habit.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
