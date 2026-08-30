@@ -6,6 +6,7 @@ import com.codigitech.belay.data.local.dao.PairingDao
 import com.codigitech.belay.data.local.entity.PairingEntity
 import com.codigitech.belay.data.remote.PairingRemoteDataSource
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
+import com.codigitech.belay.testutil.RecordingErrorReporter
 import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -53,6 +54,7 @@ class PairingRepositoryTest {
 
   private val fixedClock = BelayClock { 1_000L }
   private val fixedIds = IdGenerator { "pairing-1" }
+  private val errorReporter = RecordingErrorReporter()
 
   private fun repository(dao: PairingDao, remote: PairingRemoteDataSource) =
     PairingRepositoryImpl(
@@ -61,6 +63,7 @@ class PairingRepositoryTest {
       codeGenerator = PairCodeGenerator(Random(1)),
       clock = fixedClock,
       idGenerator = fixedIds,
+      errorReporter = errorReporter,
     )
 
   @Test
@@ -85,7 +88,7 @@ class PairingRepositoryTest {
     val remote = FakePairingRemoteDataSource()
     // Simulate the pairing having been created on the challenger's device: it only ever reached
     // this device's remote data source, never its local Room.
-    val pending = PairingRepositoryImpl(dao, remote, PairCodeGenerator(Random(1)), fixedClock, fixedIds).createPendingPairing("user-1")
+    val pending = PairingRepositoryImpl(dao, remote, PairCodeGenerator(Random(1)), fixedClock, fixedIds, errorReporter).createPendingPairing("user-1")
     dao.stored.clear()
 
     val result = repository(dao, remote).completePairing(pairCode = pending.pairCode, toUserId = "user-2")
@@ -155,5 +158,14 @@ class PairingRepositoryTest {
     val contacts = repository(dao, FakePairingRemoteDataSource(unreachable = true)).getPairedContactIds("user-1")
 
     assertEquals(listOf("user-2"), contacts)
+  }
+
+  @Test
+  fun `a swallowed remote failure is reported rather than lost`() = runTest {
+    val remote = FakePairingRemoteDataSource(unreachable = true)
+
+    repository(FakePairingDao(), remote).createPendingPairing(fromUserId = "user-1")
+
+    assertTrue(errorReporter.recorded.any { it is PairingFirestoreUnavailableException })
   }
 }

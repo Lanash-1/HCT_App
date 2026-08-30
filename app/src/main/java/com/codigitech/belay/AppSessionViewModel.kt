@@ -2,6 +2,7 @@ package com.codigitech.belay
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.codigitech.belay.core.ErrorReporter
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,13 +23,16 @@ data class AppSessionUiState(val isLoading: Boolean = true, val themePref: Strin
 @HiltViewModel
 class AppSessionViewModel
 @Inject
-constructor(private val authRepository: AuthRepository, userRepository: UserRepository) : ViewModel() {
+constructor(errorReporter: ErrorReporter, private val authRepository: AuthRepository, userRepository: UserRepository) : ViewModel() {
 
   private val _uiState = MutableStateFlow(AppSessionUiState())
   val uiState: StateFlow<AppSessionUiState> = _uiState.asStateFlow()
 
   init {
     val userId = authRepository.currentUserId()
+    // Tag crash reports with the account they came from (PRD §6.8) — with one witness per
+    // challenger, a report that can't be traced to an account is close to untriageable.
+    errorReporter.identify(userId)
     if (userId == null) {
       _uiState.value = _uiState.value.copy(isLoading = false)
     } else {

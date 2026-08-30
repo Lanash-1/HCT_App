@@ -2,6 +2,7 @@ package com.codigitech.belay.data.repository
 
 import com.codigitech.belay.core.BelayClock
 import com.codigitech.belay.core.IdGenerator
+import com.codigitech.belay.testutil.RecordingErrorReporter
 import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
 import com.codigitech.belay.data.local.entity.ChallengeEntity
@@ -108,6 +109,7 @@ class ChallengeRepositoryTest {
   private val fixedClock = BelayClock { 86_400_000L } // epoch day 1, midnight UTC
   private var nextId = 0
   private val sequentialIds = IdGenerator { "id-${nextId++}" }
+  private val errorReporter = RecordingErrorReporter()
 
   private fun repository(
     challengeDao: ChallengeDao = FakeChallengeDao(),
@@ -124,6 +126,7 @@ class ChallengeRepositoryTest {
       clock = fixedClock,
       idGenerator = sequentialIds,
       reminderScheduler = reminderScheduler,
+      errorReporter = errorReporter,
     )
 
   private val validHabits = listOf(HabitSpec(name = "Run 3km", detail = "before 8am"), HabitSpec(name = "Read", detail = null))
@@ -380,5 +383,23 @@ class ChallengeRepositoryTest {
     val result = repository(challengeDao).observeChallenge("challenge-1")
 
     assertEquals(challenge, (result as MutableStateFlow).value)
+  }
+
+  @Test
+  fun `a swallowed remote failure is reported rather than lost`() = runTest {
+    repository(
+        challengeRemote = FakeChallengeRemoteDataSource(unreachable = true),
+        habitRemote = FakeHabitRemoteDataSource(unreachable = true),
+      )
+      .createChallenge(
+        challengerUserId = "user-1",
+        witnessUserId = "user-2",
+        title = "September",
+        habits = validHabits,
+        durationDays = 30,
+        graceDaysTotal = 2,
+      )
+
+    assertTrue(errorReporter.recorded.any { it is ChallengeFirestoreUnavailableException })
   }
 }

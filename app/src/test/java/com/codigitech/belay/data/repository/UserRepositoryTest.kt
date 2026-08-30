@@ -5,6 +5,7 @@ import com.codigitech.belay.data.local.dao.UserDao
 import com.codigitech.belay.data.local.entity.UserEntity
 import com.codigitech.belay.data.remote.UserRemoteDataSource
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
+import com.codigitech.belay.testutil.RecordingErrorReporter
 import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,8 +48,16 @@ class UserRepositoryTest {
 
   private val fixedClock = BelayClock { 5_000L }
 
+  private val errorReporter = RecordingErrorReporter()
+
   private fun repository(dao: UserDao, remote: UserRemoteDataSource) =
-    UserRepositoryImpl(userDao = dao, remoteDataSource = remote, codeGenerator = PairCodeGenerator(Random(1)), clock = fixedClock)
+    UserRepositoryImpl(
+      userDao = dao,
+      remoteDataSource = remote,
+      codeGenerator = PairCodeGenerator(Random(1)),
+      clock = fixedClock,
+      errorReporter = errorReporter,
+    )
 
   @Test
   fun `ensureProfile creates a new profile with defaults when none exists remotely`() = runTest {
@@ -207,5 +216,16 @@ class UserRepositoryTest {
     val profile = repository(dao, FakeUserRemoteDataSource(unreachable = true)).getProfile("user-2")
 
     assertEquals(cached, profile)
+  }
+
+  @Test
+  fun `a swallowed remote failure is reported rather than lost`() = runTest {
+    val remote = FakeUserRemoteDataSource(unreachable = true)
+
+    repository(FakeUserDao(), remote).ensureProfile(userId = "user-1", displayName = "ana")
+
+    // The profile still gets created locally (that's the point of swallowing), but PRD §6.8 wants
+    // someone to find out the write never landed.
+    assertTrue(errorReporter.recorded.any { it is FirestoreUnavailableException })
   }
 }

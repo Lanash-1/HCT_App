@@ -1,6 +1,8 @@
 package com.codigitech.belay.data.repository
 
 import com.codigitech.belay.core.BelayClock
+import com.codigitech.belay.core.ErrorReporter
+import com.codigitech.belay.core.bestEffort
 import com.codigitech.belay.core.IdGenerator
 import com.codigitech.belay.data.local.dao.PairingDao
 import com.codigitech.belay.data.local.entity.PairingEntity
@@ -34,6 +36,7 @@ constructor(
   private val codeGenerator: PairCodeGenerator,
   private val clock: BelayClock,
   private val idGenerator: IdGenerator,
+  private val errorReporter: ErrorReporter,
 ) : PairingRepository {
 
   override suspend fun createPendingPairing(fromUserId: String): PairingEntity {
@@ -49,7 +52,7 @@ constructor(
     // Best-effort remote write: a Firestore hiccup shouldn't crash role pick, and the code is
     // still usable once connectivity returns (no dedicated retry queue for this yet, unlike
     // check-ins' WorkManager queue — see TECH_STACK.md §5).
-    runCatching { remoteDataSource.upsert(pairing) }
+    errorReporter.bestEffort { remoteDataSource.upsert(pairing) }
     pairingDao.upsert(pairing)
     return pairing
   }
@@ -61,17 +64,18 @@ constructor(
       try {
         remoteDataSource.findPendingByCode(pairCode) ?: return PairingResult.NotFound
       } catch (e: Exception) {
+        errorReporter.recordException(e)
         return PairingResult.NetworkError
       }
     val paired = pending.copy(toUserId = toUserId, status = "paired")
-    runCatching { remoteDataSource.upsert(paired) }
+    errorReporter.bestEffort { remoteDataSource.upsert(paired) }
     pairingDao.upsert(paired)
     return PairingResult.Success(paired)
   }
 
   override suspend fun getPairedContactIds(userId: String): List<String> {
     val pairings =
-      runCatching { remoteDataSource.findPairedContacts(userId) }.getOrNull() ?: pairingDao.getPairedFor(userId)
+      errorReporter.bestEffort { remoteDataSource.findPairedContacts(userId) }.getOrNull() ?: pairingDao.getPairedFor(userId)
     return pairings.map { if (it.fromUserId == userId) it.toUserId else it.fromUserId }.filterNotNull().distinct()
   }
 }

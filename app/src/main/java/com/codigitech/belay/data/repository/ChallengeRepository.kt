@@ -1,6 +1,8 @@
 package com.codigitech.belay.data.repository
 
 import com.codigitech.belay.core.BelayClock
+import com.codigitech.belay.core.ErrorReporter
+import com.codigitech.belay.core.bestEffort
 import com.codigitech.belay.core.IdGenerator
 import com.codigitech.belay.data.local.dao.ChallengeDao
 import com.codigitech.belay.data.local.dao.HabitDao
@@ -66,6 +68,7 @@ constructor(
   private val clock: BelayClock,
   private val idGenerator: IdGenerator,
   private val reminderScheduler: ReminderScheduler,
+  private val errorReporter: ErrorReporter,
 ) : ChallengeRepository {
 
   override suspend fun createChallenge(
@@ -87,7 +90,7 @@ constructor(
     challengeDao.getActiveForChallenger(challengerUserId).forEach { previouslyActive ->
       val abandoned = previouslyActive.copy(status = "abandoned")
       challengeDao.update(abandoned)
-      runCatching { challengeRemoteDataSource.upsert(abandoned) }
+      errorReporter.bestEffort { challengeRemoteDataSource.upsert(abandoned) }
     }
 
     val challengeId = idGenerator.newId()
@@ -123,8 +126,8 @@ constructor(
     // Best-effort remote write, same pattern as PairingRepository/UserRepository: a Firestore
     // hiccup shouldn't block challenge creation, since Room is the source of truth for "my own"
     // data and the witness's device will pick this up once connectivity returns.
-    runCatching { challengeRemoteDataSource.upsert(challenge) }
-    runCatching { habitRemoteDataSource.upsertAll(habitEntities) }
+    errorReporter.bestEffort { challengeRemoteDataSource.upsert(challenge) }
+    errorReporter.bestEffort { habitRemoteDataSource.upsertAll(habitEntities) }
     challengeDao.upsert(challenge)
     habitDao.upsertAll(habitEntities)
 
