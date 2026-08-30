@@ -59,6 +59,9 @@ private class FakeChallengeRepositoryForWatching(private val witnessed: List<Cha
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = error("not used")
 
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) = Unit
+
+
   override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 

@@ -13,6 +13,7 @@ import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.InteractionRepository
+import com.codigitech.belay.data.repository.PairingRepository
 import com.codigitech.belay.data.repository.UserRepository
 import com.codigitech.belay.domain.challenge.hasChallengeEnded
 import com.codigitech.belay.domain.challenge.isGraceExhausted
@@ -79,6 +80,7 @@ constructor(
   private val userRepository: UserRepository,
   private val interactionRepository: InteractionRepository,
   private val clock: BelayClock,
+  private val pairingRepository: PairingRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(TodayUiState())
@@ -100,6 +102,23 @@ constructor(
         .flatMapLatest(::challengeUiStateFlow)
         .onEach { state -> _uiState.value = state }
         .launchIn(viewModelScope)
+
+      // A challenge can be left witnessless when its witness deletes their account (PRD §6.7).
+      // Pairing again is the fix, but the witness picker only exists at creation — so a challenge
+      // in that state adopts whoever the challenger has since paired with, rather than stranding
+      // them with a challenge nobody can watch.
+      viewModelScope.launch {
+        challengeRepository
+          .observeActiveForChallenger(userId)
+          .distinctUntilChanged()
+          .collectLatest { challenge ->
+            if (challenge != null && challenge.witnessUserId == null) {
+              pairingRepository.getPairedContactIds(userId).firstOrNull()?.let { contactId ->
+                challengeRepository.attachWitnessIfMissing(userId, contactId)
+              }
+            }
+          }
+      }
 
       viewModelScope.launch {
         challengeRepository

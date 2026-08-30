@@ -50,6 +50,18 @@ interface ChallengeRepository {
   fun observeChallenge(challengeId: String): Flow<ChallengeEntity?>
 
   /**
+   * Gives an active challenge a witness if it has none (PRD §6.7).
+   *
+   * A witness is chosen at creation, but a challenge can end up without one — the witness deletes
+   * their account and the server clears the link. Without this, the challenger is stuck: the
+   * witness picker only exists on the create-challenge screen, so their only way back to being
+   * watched would be abandoning a challenge they're partway through.
+   *
+   * No-op when a witness is already set — one witness per challenge (PRD §8).
+   */
+  suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String)
+
+  /**
    * Mirrors this challenge's Firestore challenge/habit docs into Room for as long as this is
    * collected — the only path by which server-computed fields (grace/perfect-days, streaks,
    * streak_broken_at) written by the dayRollover Cloud Function reach the device (PRD §6.2).
@@ -143,6 +155,13 @@ constructor(
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = challengeDao.observeWitnessed(userId)
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = challengeDao.observe(challengeId)
+
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) {
+    val challenge = challengeDao.getActiveForChallenger(challengerUserId).firstOrNull { it.witnessUserId == null } ?: return
+    val updated = challenge.copy(witnessUserId = witnessUserId)
+    challengeDao.update(updated)
+    errorReporter.bestEffort { challengeRemoteDataSource.upsert(updated) }
+  }
 
   override suspend fun syncRemoteUpdates(challengeId: String) {
     combine(challengeRemoteDataSource.observe(challengeId), habitRemoteDataSource.observeForChallenge(challengeId)) { challenge, habits ->
