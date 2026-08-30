@@ -16,6 +16,12 @@ data class UserEntity(
   val notifDailyReminderTime: String?, // HH:mm
   val notifAllowNudge: Boolean,
   val createdAt: Long,
+  /**
+   * Epoch day this user last opened the app — lets a challenger see that their witness has gone
+   * quiet (PRD §6.7). Null for a user who has never opened it, which reads differently from
+   * "away for zero days".
+   */
+  val lastSeenAt: Long? = null,
 )
 
 /** Mirrors DATA_MODEL.md `challenges`. */
@@ -26,7 +32,8 @@ data class UserEntity(
 data class ChallengeEntity(
   @PrimaryKey val challengeId: String,
   val challengerUserId: String,
-  val witnessUserId: String,
+  /** Null when nobody has accepted yet, or when the witness deleted their account (PRD §6.7). */
+  val witnessUserId: String?,
   val title: String,
   val durationDays: Int,
   val graceDaysTotal: Int,

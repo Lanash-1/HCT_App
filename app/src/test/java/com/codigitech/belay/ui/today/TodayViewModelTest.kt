@@ -102,6 +102,9 @@ private class FakeUserRepositoryForToday(private val profiles: Map<String, UserE
 
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
 
+  override suspend fun touchLastSeen(userId: String) = Unit
+
+
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = error("not used")
@@ -143,7 +146,9 @@ class TodayViewModelTest {
       HabitEntity("habit-2", "challenge-1", "Read", null, null, null, 1, currentStreak = 2),
     )
 
-  private val witness = UserEntity("user-2", "Priya", "AB12", "witness", "system", null, true, createdAt = 0L)
+  // lastSeenAt = today: the default fixture is a witness who is actually around, so the
+  // §6.7 "away"/"never opened" states are opt-in per test rather than the baseline.
+  private val witness = UserEntity("user-2", "Priya", "AB12", "witness", "system", null, true, createdAt = 0L, lastSeenAt = 5L)
 
   private fun viewModel(
     authRepository: AuthRepository = FakeAuthRepositoryForToday(),
@@ -308,5 +313,74 @@ class TodayViewModelTest {
     val vm = viewModel()
 
     assertTrue(vm.uiState.value.brokenHabitNames.isEmpty())
+  }
+
+  // ---- PRD §6.7 edge states ----
+
+  @Test
+  fun `a challenge with nobody watching says so, instead of showing a blank witness pill`() = runTest {
+    val vm = viewModel(challengeRepository = FakeChallengeRepositoryForToday(activeChallenge.copy(witnessUserId = null)))
+
+    val state = vm.uiState.value
+    assertFalse(state.hasWitness)
+    assertEquals(TodayCopy.NO_WITNESS_STATUS, state.witnessStatusText)
+  }
+
+  @Test
+  fun `a witness who has never opened the app is named as invited, not as watching`() = runTest {
+    val vm = viewModel(userRepository = FakeUserRepositoryForToday(mapOf("user-2" to witness.copy(lastSeenAt = null))))
+
+    val state = vm.uiState.value
+    assertTrue(state.hasWitness)
+    assertEquals(TodayCopy.witnessNotOpenedYet("Priya"), state.witnessStatusText)
+  }
+
+  @Test
+  fun `a witness who has been away for days is flagged, with the count`() = runTest {
+    // Clock is epoch day 5; last seen on day 1 is four days ago.
+    val vm = viewModel(userRepository = FakeUserRepositoryForToday(mapOf("user-2" to witness.copy(lastSeenAt = 1L))))
+
+    val state = vm.uiState.value
+    assertTrue(state.isWitnessAway)
+    assertEquals(TodayCopy.witnessAway("Priya", 4), state.witnessStatusText)
+  }
+
+  @Test
+  fun `a witness who looked in yesterday is not flagged as away`() = runTest {
+    val vm = viewModel(userRepository = FakeUserRepositoryForToday(mapOf("user-2" to witness.copy(lastSeenAt = 4L))))
+
+    assertFalse(vm.uiState.value.isWitnessAway)
+  }
+
+  @Test
+  fun `spending the last grace day is surfaced, since the next miss now costs a streak`() = runTest {
+    val vm = viewModel(challengeRepository = FakeChallengeRepositoryForToday(activeChallenge.copy(graceDaysUsed = 2)))
+
+    val state = vm.uiState.value
+    assertEquals(0, state.graceDaysLeft)
+    assertTrue(state.isGraceExhausted)
+  }
+
+  @Test
+  fun `grace still in hand is not flagged`() = runTest {
+    assertFalse(viewModel().uiState.value.isGraceExhausted)
+  }
+
+  @Test
+  fun `a challenge whose days have all elapsed reads as finished`() = runTest {
+    // Started day 2, ran 3 days (2, 3, 4) — day 5 is past the end.
+    val vm = viewModel(challengeRepository = FakeChallengeRepositoryForToday(activeChallenge.copy(durationDays = 3)))
+
+    val state = vm.uiState.value
+    assertTrue(state.hasEnded)
+    assertEquals(0, state.daysToGo)
+  }
+
+  @Test
+  fun `a challenge still running does not read as finished`() = runTest {
+    val state = viewModel().uiState.value
+
+    assertFalse(state.hasEnded)
+    assertEquals(18, state.daysToGo)
   }
 }

@@ -194,7 +194,7 @@ constructor(
     if (challenge == null) flowOf(emptyList()) else habitRepository.observeForChallenge(challenge.challengeId)
 
   private fun witnessNameFlow(challenge: ChallengeEntity?): Flow<String?> =
-    if (challenge == null) flowOf(null) else flow { emit(userRepository.getProfile(challenge.witnessUserId)?.displayName) }
+    if (challenge?.witnessUserId == null) flowOf(null) else flow { emit(userRepository.getProfile(challenge.witnessUserId)?.displayName) }
 
   private fun watchingRowsFlow(witnessed: List<ChallengeEntity>): Flow<List<Pair<ChallengeEntity, String>>> =
     if (witnessed.isEmpty()) {

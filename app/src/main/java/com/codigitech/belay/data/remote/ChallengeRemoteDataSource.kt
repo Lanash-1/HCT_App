@@ -42,13 +42,14 @@ constructor(private val firestore: FirebaseFirestore) : ChallengeRemoteDataSourc
 private fun DocumentSnapshot.toChallengeEntity(): ChallengeEntity? {
   val challengeId = getString("challenge_id") ?: return null
   val challengerUserId = getString("challenger_user_id") ?: return null
-  val witnessUserId = getString("witness_user_id") ?: return null
   val title = getString("title") ?: return null
   val status = getString("status") ?: return null
   return ChallengeEntity(
     challengeId = challengeId,
     challengerUserId = challengerUserId,
-    witnessUserId = witnessUserId,
+    // Absent when nobody has accepted yet, or when the witness deleted their account — the
+    // challenge is still the challenger's, so it must survive the read (PRD §6.7).
+    witnessUserId = getString("witness_user_id"),
     title = title,
     durationDays = (getLong("duration_days") ?: 0L).toInt(),
     graceDaysTotal = (getLong("grace_days_total") ?: 0L).toInt(),

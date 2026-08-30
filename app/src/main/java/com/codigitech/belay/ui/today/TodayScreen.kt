@@ -64,7 +64,13 @@ fun TodayScreen(
   Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
     Text(uiState.challengeTitle, style = MaterialTheme.typography.headlineSmall)
 
-    WitnessStatusPill(uiState.witnessStatusText)
+    // Dulled when nobody's actually watching (no witness, invite unopened, gone quiet) — a live
+    // green pill for an absent witness overstates the one thing this app is for (PRD §6.7).
+    WitnessStatusPill(uiState.witnessStatusText, isLive = uiState.hasWitness && !uiState.isWitnessAway)
+
+    if (uiState.hasEnded) {
+      NoticeCard(title = TodayCopy.ENDED_TITLE, detail = TodayCopy.ENDED_DETAIL)
+    }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
       ProgressRing(
@@ -80,6 +86,12 @@ fun TodayScreen(
     uiState.cheerMessage?.let { CheerCard(it) }
 
     SummaryStrip(uiState)
+
+    // Grace is decided at creation and only spent (PRD §4.6), so running out is worth saying
+    // plainly rather than leaving as a "0" in the summary strip.
+    if (uiState.isGraceExhausted && !uiState.hasEnded) {
+      NoticeCard(title = TodayCopy.GRACE_EXHAUSTED_TITLE, detail = TodayCopy.GRACE_EXHAUSTED_DETAIL)
+    }
 
     uiState.nudgeMessage?.let { NudgeToast(message = it, onDismiss = onDismissNudge) }
   }
@@ -119,17 +131,39 @@ private fun StreakRecoveryDialog(habitNames: List<String>, onDismiss: () -> Unit
 }
 
 @Composable
-private fun WitnessStatusPill(text: String, modifier: Modifier = Modifier) {
+private fun WitnessStatusPill(text: String, isLive: Boolean, modifier: Modifier = Modifier) {
   if (text.isBlank()) return
-  Surface(modifier = modifier, shape = RoundedCornerShape(100), color = MaterialTheme.colorScheme.secondaryContainer) {
+  Surface(
+    modifier = modifier,
+    shape = RoundedCornerShape(100),
+    color = if (isLive) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+  ) {
     Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-      Box(modifier = Modifier.size(7.dp).background(color = MaterialTheme.colorScheme.primary, shape = CircleShape))
+      Box(
+        modifier =
+          Modifier.size(7.dp)
+            .background(
+              color = if (isLive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+              shape = CircleShape,
+            )
+      )
       Text(
         text,
         modifier = Modifier.padding(start = 8.dp),
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        color = if (isLive) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
+  }
+}
+
+/** The shared shape for the §6.7 edge states — a stated situation, not an empty space. */
+@Composable
+private fun NoticeCard(title: String, detail: String, modifier: Modifier = Modifier) {
+  Card(modifier = modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+      Text(title, style = MaterialTheme.typography.titleSmall)
+      Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
   }
 }

@@ -88,6 +88,9 @@ private class FakeUserRepositoryForDetail(private val profiles: Map<String, User
 
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
 
+  override suspend fun touchLastSeen(userId: String) = Unit
+
+
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
   override fun observeLocalUser(userId: String) = error("not used")
@@ -250,5 +253,17 @@ class WitnessDetailViewModelTest {
 
     assertTrue(result is CheerOrNudgeResult.Success)
     assertEquals(listOf("challenge-1", "witness-1", "Don't forget!"), interactions.nudgeCalls.single())
+  }
+
+  @Test
+  fun `a finished challenge reads as finished from the witness side too`() = runTest {
+    val vm = viewModel(challengeRepository = FakeChallengeRepositoryForDetail(challenge.copy(durationDays = 1)))
+
+    assertTrue(vm.uiState.value.hasEnded)
+  }
+
+  @Test
+  fun `a running challenge does not read as finished`() = runTest {
+    assertFalse(viewModel().uiState.value.hasEnded)
   }
 }

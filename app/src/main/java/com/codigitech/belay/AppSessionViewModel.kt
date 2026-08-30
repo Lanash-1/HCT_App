@@ -29,7 +29,7 @@ constructor(
   errorReporter: ErrorReporter,
   pushTokenRepository: PushTokenRepository,
   private val authRepository: AuthRepository,
-  userRepository: UserRepository,
+  private val userRepository: UserRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(AppSessionUiState())
@@ -46,6 +46,9 @@ constructor(
       // FCM rotates tokens on its own schedule, including while the app is closed — re-register
       // on every start so a returning user doesn't silently stop receiving pushes.
       viewModelScope.launch { pushTokenRepository.register(userId) }
+      // Opening the app is the signal a challenger's "your witness hasn't looked in" state reads
+      // from (PRD §6.7), so it's recorded here rather than on any one screen.
+      viewModelScope.launch { userRepository.touchLastSeen(userId) }
       userRepository
         .observeLocalUser(userId)
         .onEach { user ->

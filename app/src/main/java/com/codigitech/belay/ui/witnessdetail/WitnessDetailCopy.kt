@@ -34,4 +34,7 @@ object WitnessDetailCopy {
       doneCount == habitCount -> PERFECT_DAY
       else -> PARTIAL_DAY
     }
+
+  // PRD §6.7 — a witness looking at a challenge that has already run its course.
+  const val ENDED_NOTE = "This challenge has finished. Nothing left to check off."
 }

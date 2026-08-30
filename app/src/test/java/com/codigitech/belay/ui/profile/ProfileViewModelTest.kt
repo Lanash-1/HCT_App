@@ -72,6 +72,9 @@ private class FakeUserRepositoryForProfile(private val profiles: Map<String, Use
     nudgeUpdates += userId to allowed
   }
 
+  override suspend fun touchLastSeen(userId: String) = Unit
+
+
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
   val localUserFlows = mutableMapOf<String, MutableStateFlow<UserEntity?>>()

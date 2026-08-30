@@ -85,7 +85,9 @@ constructor(
       }
     }
 
-  private fun witnessNameFlow(witnessUserId: String) = flow { emit(userRepository.getProfile(witnessUserId)?.displayName ?: "") }
+  private fun witnessNameFlow(witnessUserId: String?) = flow {
+    emit(witnessUserId?.let { userRepository.getProfile(it)?.displayName } ?: "")
+  }
 
   private fun buildState(challenge: ChallengeEntity, latest: RecapEntity?, witnessName: String): RecapUiState {
     if (latest == null) {

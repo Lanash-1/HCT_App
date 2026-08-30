@@ -19,6 +19,7 @@ This is a Firestore schema — each "table" below is a top-level collection, fla
 | `notif_daily_reminder_time` | string (HH:mm) | |
 | `notif_allow_nudge` | boolean | "let X nudge me" toggle |
 | `created_at` | datetime | |
+| `last_seen_at` | date (epoch day), nullable | last app open — what a challenger's "your witness hasn't looked in for N days" state is measured from (PRD §6.7); null until their first open |
 
 #### `users/{user_id}/private/push`
 FCM device registration tokens, in an owner-only subdocument rather than a field on `users` — the
@@ -35,7 +36,7 @@ sign-in, pruned by Cloud Functions when FCM reports a token as unregistered.
 |---|---|---|
 | `challenge_id` | string | primary key |
 | `challenger_user_id` | string | FK → `users` |
-| `witness_user_id` | string | FK → `users` |
+| `witness_user_id` | string, nullable | FK → `users`; null before anyone accepts, and set back to null if the witness deletes their account (PRD §6.7) |
 | `title` | string | e.g. "Morning reset" |
 | `duration_days` | int | one of 7 / 21 / 30 / 66 |
 | `grace_days_total` | int | set at creation, 0–3 per design |

@@ -70,6 +70,16 @@ fun WitnessDetailScreen(
 
     StatusCard(uiState)
 
+    // A finished challenge would otherwise read as a day of misses in the error-coloured status
+    // card above — there's nothing left to miss (PRD §6.7).
+    if (uiState.hasEnded) {
+      Text(
+        WitnessDetailCopy.ENDED_NOTE,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
     ProgressCard(uiState)
 
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -12,6 +12,18 @@ object TodayCopy {
   const val RECOVERY_DETAIL = "Grace ran out, so this one's starting over. That's the deal — it doesn't erase what you already built."
   const val RECOVERY_CONTINUE = "Start again"
 
+  // PRD §6.7 edge states — the situations the prototype's happy path never showed.
+  const val NO_WITNESS_STATUS = "No witness yet · share your code to add one"
+  const val GRACE_EXHAUSTED_TITLE = "No grace days left"
+  const val GRACE_EXHAUSTED_DETAIL = "Miss a habit now and its streak goes back to zero. Nothing else changes."
+  const val ENDED_TITLE = "This challenge is over"
+  const val ENDED_DETAIL = "Every day of it is counted. Start another when you're ready."
+
+  fun witnessNotOpenedYet(witnessName: String): String = "$witnessName hasn't opened Belay yet"
+
+  fun witnessAway(witnessName: String, daysAway: Int): String =
+    "$witnessName hasn't looked in for $daysAway day${if (daysAway == 1) "" else "s"}"
+
   fun progressLabel(checked: Int, total: Int): String = "$checked/$total"
 
   fun recoveryHabitList(names: List<String>): String = names.joinToString(", ")
