@@ -7,6 +7,8 @@ import com.codigitech.belay.data.local.dao.UserDao
 import com.codigitech.belay.data.local.entity.UserEntity
 import com.codigitech.belay.data.remote.UserRemoteDataSource
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
@@ -21,6 +23,12 @@ interface UserRepository {
   suspend fun setDailyReminderTime(userId: String, time: String?)
 
   suspend fun setNudgeAllowed(userId: String, allowed: Boolean)
+
+  /**
+   * Records that this user opened the app today (PRD §6.7) — what a challenger's "your witness
+   * hasn't looked in for N days" state is computed from.
+   */
+  suspend fun touchLastSeen(userId: String)
 
   /** Looks up any user's profile (e.g. a paired contact's display name) — does not create one if missing. */
   suspend fun getProfile(userId: String): UserEntity?
@@ -78,6 +86,11 @@ constructor(
     errorReporter.bestEffort { remoteDataSource.upsert(updated) }
     userDao.upsert(updated)
   }
+
+  override suspend fun touchLastSeen(userId: String) = update(userId) { it.copy(lastSeenAt = todayEpochDay()) }
+
+  private fun todayEpochDay(): Long =
+    Instant.ofEpochMilli(clock.nowEpochMillis()).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay()
 
   override suspend fun getProfile(userId: String): UserEntity? =
     errorReporter.bestEffort { remoteDataSource.get(userId) }.getOrNull()?.also { userDao.upsert(it) } ?: userDao.get(userId)

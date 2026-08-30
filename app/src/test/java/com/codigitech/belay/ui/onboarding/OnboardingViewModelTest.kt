@@ -52,6 +52,9 @@ private class FakeUserRepository : UserRepository {
 
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
 
+  override suspend fun touchLastSeen(userId: String) = Unit
+
+
   override suspend fun getProfile(userId: String): UserEntity? = null
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = MutableStateFlow(null)

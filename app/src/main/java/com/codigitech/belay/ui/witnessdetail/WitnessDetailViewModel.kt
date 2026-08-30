@@ -13,6 +13,7 @@ import com.codigitech.belay.data.repository.CheerOrNudgeResult
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.InteractionRepository
 import com.codigitech.belay.data.repository.UserRepository
+import com.codigitech.belay.domain.challenge.hasChallengeEnded
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -50,6 +51,7 @@ data class WitnessDetailUiState(
   val graceDaysLeft: Int = 0,
   val log: List<WitnessDetailLogRowUiState> = emptyList(),
   val challengeId: String? = null, // not rendered; needed by sendCheer/sendNudge
+  val hasEnded: Boolean = false, // PRD §6.7
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -142,6 +144,7 @@ constructor(
       challengeTitle = challenge.title,
       dayNo = dayNo,
       totalDays = challenge.durationDays,
+      hasEnded = hasChallengeEnded(challenge.startDate, challenge.durationDays, today),
       habits = habitStates,
       allDone = habitCount > 0 && doneCount == habitCount,
       headline = WitnessDetailCopy.headline(challengerName, doneCount, habitCount),

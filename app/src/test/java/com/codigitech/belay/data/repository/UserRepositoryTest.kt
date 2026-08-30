@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -227,5 +228,28 @@ class UserRepositoryTest {
     // The profile still gets created locally (that's the point of swallowing), but PRD §6.8 wants
     // someone to find out the write never landed.
     assertTrue(errorReporter.recorded.any { it is FirestoreUnavailableException })
+  }
+
+  @Test
+  fun `touching last-seen records today, so a challenger can tell their witness has gone quiet`() = runTest {
+    val dao = FakeUserDao()
+    val remote = FakeUserRemoteDataSource()
+    val repository = repository(dao, remote)
+    repository.ensureProfile(userId = "user-1", displayName = "ana")
+
+    repository.touchLastSeen("user-1")
+
+    // Clock is fixed at 5_000 ms, which is still epoch day 0.
+    assertEquals(0L, dao.get("user-1")?.lastSeenAt)
+    assertEquals(0L, remote.stored["user-1"]?.lastSeenAt)
+  }
+
+  @Test
+  fun `touching last-seen for an unknown user does nothing rather than inventing a profile`() = runTest {
+    val dao = FakeUserDao()
+
+    repository(dao, FakeUserRemoteDataSource()).touchLastSeen("nobody")
+
+    assertNull(dao.get("nobody"))
   }
 }

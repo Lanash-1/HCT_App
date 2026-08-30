@@ -68,6 +68,9 @@ private class FakeUserRepositoryForRecap(private val profiles: Map<String, UserE
 
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
 
+  override suspend fun touchLastSeen(userId: String) = Unit
+
+
   override suspend fun getProfile(userId: String): UserEntity? = profiles[userId]
 
   override fun observeLocalUser(userId: String) = error("not used")

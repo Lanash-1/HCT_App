@@ -30,6 +30,8 @@ private class FakeAuthRepositoryForSession(private val userId: String? = "user-1
 }
 
 private class FakeUserRepositoryForSession(private val user: MutableStateFlow<UserEntity?>) : UserRepository {
+  val touched = mutableListOf<String>()
+
   override suspend fun ensureProfile(userId: String, displayName: String) = error("not used")
 
   override suspend fun setDefaultMode(userId: String, mode: String) = error("not used")
@@ -39,6 +41,11 @@ private class FakeUserRepositoryForSession(private val user: MutableStateFlow<Us
   override suspend fun setDailyReminderTime(userId: String, time: String?) = error("not used")
 
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = error("not used")
+
+  override suspend fun touchLastSeen(userId: String) {
+    touched.add(userId)
+  }
+
 
   override suspend fun getProfile(userId: String): UserEntity? = user.value
 
@@ -119,5 +126,14 @@ class AppSessionViewModelTest {
     AppSessionViewModel(errorReporter, pushTokenRepository, FakeAuthRepositoryForSession(userId = null), FakeUserRepositoryForSession(MutableStateFlow(null)))
 
     assertEquals(emptyList<String>(), pushTokenRepository.registered)
+  }
+
+  @Test
+  fun `opening the app records the user as seen today, which is what witness-away is measured from`() = runTest {
+    val userRepository = FakeUserRepositoryForSession(MutableStateFlow(null))
+
+    AppSessionViewModel(errorReporter, pushTokenRepository, FakeAuthRepositoryForSession(userId = "user-1"), userRepository)
+
+    assertEquals(listOf("user-1"), userRepository.touched)
   }
 }

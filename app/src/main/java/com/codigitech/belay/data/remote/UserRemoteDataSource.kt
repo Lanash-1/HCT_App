@@ -40,6 +40,7 @@ private fun UserEntity.toFirestoreMap(): Map<String, Any?> =
     "notif_daily_reminder_time" to notifDailyReminderTime,
     "notif_allow_nudge" to notifAllowNudge,
     "created_at" to createdAt,
+    "last_seen_at" to lastSeenAt,
   )
 
 private fun DocumentSnapshot.toUserEntity(): UserEntity? {
@@ -59,5 +60,6 @@ private fun DocumentSnapshot.toUserEntity(): UserEntity? {
     notifDailyReminderTime = getString("notif_daily_reminder_time"),
     notifAllowNudge = notifAllowNudge,
     createdAt = createdAt,
+    lastSeenAt = getLong("last_seen_at"),
   )
 }
