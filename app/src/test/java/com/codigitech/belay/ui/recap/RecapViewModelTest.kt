@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -71,6 +73,30 @@ private class FakeUserRepositoryForRecap(private val profiles: Map<String, UserE
   override fun observeLocalUser(userId: String) = error("not used")
 }
 
+private object FakeCardImage : com.codigitech.belay.data.media.RecapCardImage {
+  // Never invoked: a fake store has no reason to rasterise, and android.graphics.Bitmap can't be
+  // constructed in a plain JVM test.
+  override fun asBitmap(): android.graphics.Bitmap = error("not rasterised in tests")
+}
+
+private class FakeRecapCardStore : com.codigitech.belay.data.media.RecapCardStore {
+  val saved = mutableListOf<String>()
+  val cached = mutableListOf<String>()
+  var failing = false
+
+  override suspend fun saveToGallery(image: com.codigitech.belay.data.media.RecapCardImage, fileName: String): String? {
+    if (failing) return null
+    saved.add(fileName)
+    return "content://media/external/images/media/1"
+  }
+
+  override suspend fun cacheForSharing(image: com.codigitech.belay.data.media.RecapCardImage, fileName: String): String? {
+    if (failing) return null
+    cached.add(fileName)
+    return "content://com.codigitech.belay.fileprovider/recap-cards/card.png"
+  }
+}
+
 class RecapViewModelTest {
 
   @get:Rule val mainDispatcherRule = MainDispatcherRule()
@@ -121,12 +147,14 @@ class RecapViewModelTest {
       generatedAt = 1L,
     )
 
+  private val cardStore = FakeRecapCardStore()
+
   private fun viewModel(
     authRepository: AuthRepository = FakeAuthRepositoryForRecap(),
     challengeRepository: ChallengeRepository = FakeChallengeRepositoryForRecap(activeChallenge),
     recapRepository: RecapRepository = FakeRecapRepositoryForRecap(listOf(newerRecap, olderRecap)),
     userRepository: UserRepository = FakeUserRepositoryForRecap(mapOf("user-2" to witness)),
-  ) = RecapViewModel(authRepository, challengeRepository, recapRepository, userRepository)
+  ) = RecapViewModel(authRepository, challengeRepository, recapRepository, userRepository, cardStore)
 
   @Test
   fun `no active challenge yields no recap`() = runTest {
@@ -172,5 +200,56 @@ class RecapViewModelTest {
     assertTrue(state.shareText.contains("Priya"))
     assertTrue(state.shareText.contains("Morning reset"))
     assertTrue(state.shareText.contains("13"))
+  }
+
+  @Test
+  fun `saving the card names the file after the challenge and week, and confirms it landed`() = runTest {
+    val vm = viewModel()
+
+    vm.saveCard(FakeCardImage)
+
+    assertEquals(listOf("Belay-Morning-reset-Jan-8-Jan-14.png"), cardStore.saved)
+    assertEquals(RecapCopy.SAVED_CONFIRMATION, vm.uiState.value.cardMessage)
+  }
+
+  @Test
+  fun `a failed save says so instead of silently doing nothing`() = runTest {
+    val vm = viewModel()
+    cardStore.failing = true
+
+    vm.saveCard(FakeCardImage)
+
+    assertEquals(RecapCopy.SAVE_FAILED, vm.uiState.value.cardMessage)
+  }
+
+  @Test
+  fun `dismissing the message clears it, so it isn't re-shown on the next recomposition`() = runTest {
+    val vm = viewModel()
+    vm.saveCard(FakeCardImage)
+
+    vm.onCardMessageShown()
+
+    assertNull(vm.uiState.value.cardMessage)
+  }
+
+  @Test
+  fun `sharing hands back a uri for the rendered card`() = runTest {
+    val vm = viewModel()
+
+    val uri = vm.shareCard(FakeCardImage)
+
+    assertNotNull(uri)
+    assertEquals(listOf("Belay-Morning-reset-Jan-8-Jan-14.png"), cardStore.cached)
+  }
+
+  @Test
+  fun `a card that can't be written falls back to sharing without an image, and says why`() = runTest {
+    val vm = viewModel()
+    cardStore.failing = true
+
+    val uri = vm.shareCard(FakeCardImage)
+
+    assertNull(uri)
+    assertEquals(RecapCopy.SHARE_FAILED, vm.uiState.value.cardMessage)
   }
 }

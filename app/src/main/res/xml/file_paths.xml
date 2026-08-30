@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scoped to the one cache directory recap cards are written to (PRD §5.4) — a share target
+     gets read access to that file only, not to the app's storage generally. -->
+<paths>
+    <cache-path name="recap-cards" path="recap-cards/" />
+</paths>

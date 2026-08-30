@@ -29,6 +29,8 @@ import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import com.codigitech.belay.data.remote.PairingRemoteDataSource
 import com.codigitech.belay.data.remote.PushTokenRemoteDataSource
 import com.codigitech.belay.data.remote.UserRemoteDataSource
+import com.codigitech.belay.data.media.AndroidRecapCardStore
+import com.codigitech.belay.data.media.RecapCardStore
 import com.codigitech.belay.data.notification.FirebaseMessagingPushService
 import com.codigitech.belay.data.notification.PushNotificationService
 import com.codigitech.belay.data.remote.FirestorePushTokenRemoteDataSource
@@ -87,6 +89,8 @@ abstract class RepositoryModule {
   @Binds abstract fun bindCheckInSyncScheduler(impl: WorkManagerCheckInSyncScheduler): CheckInSyncScheduler
 
   @Binds abstract fun bindErrorReporter(impl: CrashlyticsErrorReporter): ErrorReporter
+
+  @Binds abstract fun bindRecapCardStore(impl: AndroidRecapCardStore): RecapCardStore
 
   @Binds abstract fun bindPushTokenRepository(impl: PushTokenRepositoryImpl): PushTokenRepository
 
