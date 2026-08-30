@@ -20,6 +20,16 @@ This is a Firestore schema — each "table" below is a top-level collection, fla
 | `notif_allow_nudge` | boolean | "let X nudge me" toggle |
 | `created_at` | datetime | |
 
+#### `users/{user_id}/private/push`
+FCM device registration tokens, in an owner-only subdocument rather than a field on `users` — the
+profile document is readable by any signed-in user (a witness resolves a challenger's display
+name from it) and Firestore rules can't scope a read to one field. Written by the client on
+sign-in, pruned by Cloud Functions when FCM reports a token as unregistered.
+
+| Field | Type | Notes |
+|---|---|---|
+| `fcm_tokens` | array of string | one entry per signed-in device — see [TECH_STACK.md §4](TECH_STACK.md#4-sync-model-challenger--witness-live-state) |
+
 ### `challenges`
 | Field | Type | Notes |
 |---|---|---|

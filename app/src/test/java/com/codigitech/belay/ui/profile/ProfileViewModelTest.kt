@@ -116,7 +116,19 @@ private class FakeCheckInRepositoryForProfile(private val byChallenge: Map<Strin
   override suspend fun setCheckIn(habitId: String, challengeId: String, date: Long, done: Boolean) = error("not used")
 }
 
+private class FakePushTokenRepositoryForProfile : com.codigitech.belay.data.repository.PushTokenRepository {
+  val unregistered = mutableListOf<String>()
+
+  override suspend fun register(userId: String) = Unit
+
+  override suspend fun unregister(userId: String) {
+    unregistered.add(userId)
+  }
+}
+
 class ProfileViewModelTest {
+
+  private val pushTokenRepository = FakePushTokenRepositoryForProfile()
 
   @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
@@ -164,7 +176,7 @@ class ProfileViewModelTest {
     challengeRepository: ChallengeRepository = FakeChallengeRepositoryForProfile(activeChallenge),
     habitRepository: HabitRepository = FakeHabitRepositoryForProfile(mapOf("challenge-1" to ownHabits)),
     checkInRepository: CheckInRepository = FakeCheckInRepositoryForProfile(),
-  ) = ProfileViewModel(authRepository, userRepository, challengeRepository, habitRepository, checkInRepository, fixedClock)
+  ) = ProfileViewModel(authRepository, userRepository, challengeRepository, habitRepository, checkInRepository, fixedClock, pushTokenRepository)
 
   @Test
   fun `no active challenge and nobody watched surfaces zeroed stats and no rows`() = runTest {
@@ -325,5 +337,16 @@ class ProfileViewModelTest {
     assertTrue(json.contains("\"displayName\":\"Arun\""))
     assertTrue(json.contains("\"name\":\"Run 3km\""))
     assertTrue(json.contains("\"done\":true"))
+  }
+
+  @Test
+  fun `deleting the account unbinds this device from push before the account goes away`() = runTest {
+    val vm = viewModel()
+
+    vm.deleteAccount()
+
+    // Once the account is deleted there is no user document left to prune the token from, so a
+    // token left registered would keep this device attached to a dead account id.
+    assertEquals(listOf("user-1"), pushTokenRepository.unregistered)
   }
 }

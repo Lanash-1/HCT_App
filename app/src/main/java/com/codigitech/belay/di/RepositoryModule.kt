@@ -27,8 +27,14 @@ import com.codigitech.belay.data.remote.FirestorePairingRemoteDataSource
 import com.codigitech.belay.data.remote.FirestoreUserRemoteDataSource
 import com.codigitech.belay.data.remote.HabitRemoteDataSource
 import com.codigitech.belay.data.remote.PairingRemoteDataSource
+import com.codigitech.belay.data.remote.PushTokenRemoteDataSource
 import com.codigitech.belay.data.remote.UserRemoteDataSource
+import com.codigitech.belay.data.notification.FirebaseMessagingPushService
+import com.codigitech.belay.data.notification.PushNotificationService
+import com.codigitech.belay.data.remote.FirestorePushTokenRemoteDataSource
 import com.codigitech.belay.data.repository.PairingRepository
+import com.codigitech.belay.data.repository.PushTokenRepository
+import com.codigitech.belay.data.repository.PushTokenRepositoryImpl
 import com.codigitech.belay.data.repository.PairingRepositoryImpl
 import com.codigitech.belay.data.repository.RecapRepository
 import com.codigitech.belay.data.repository.RecapRepositoryImpl
@@ -37,6 +43,7 @@ import com.codigitech.belay.data.repository.UserRepositoryImpl
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -81,11 +88,19 @@ abstract class RepositoryModule {
 
   @Binds abstract fun bindErrorReporter(impl: CrashlyticsErrorReporter): ErrorReporter
 
+  @Binds abstract fun bindPushTokenRepository(impl: PushTokenRepositoryImpl): PushTokenRepository
+
+  @Binds abstract fun bindPushTokenRemoteDataSource(impl: FirestorePushTokenRemoteDataSource): PushTokenRemoteDataSource
+
+  @Binds abstract fun bindPushNotificationService(impl: FirebaseMessagingPushService): PushNotificationService
+
   companion object {
     @Provides @Singleton fun providePairCodeGenerator(): PairCodeGenerator = PairCodeGenerator()
 
     @Provides @Singleton fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
     @Provides @Singleton fun provideFirebaseCrashlytics(): FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
+
+    @Provides @Singleton fun provideFirebaseMessaging(): FirebaseMessaging = FirebaseMessaging.getInstance()
   }
 }

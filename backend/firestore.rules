@@ -31,6 +31,12 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
+    // FCM device tokens (docs/DATA_MODEL.md). Kept out of the profile document above because that
+    // one is world-readable to signed-in users and Firestore can't scope reads to a single field.
+    match /users/{userId}/private/{document} {
+      allow read, write: if isOwner(userId);
+    }
+
     match /challenges/{challengeId} {
       allow read: if isSignedIn() &&
         (resource.data.challenger_user_id == request.auth.uid || resource.data.witness_user_id == request.auth.uid);
