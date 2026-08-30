@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -116,7 +118,10 @@ private fun PersonCard(
         ) {
           Text(
             WatchingCopy.countPill(person.doneCount, person.habitCount),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier =
+              Modifier.padding(horizontal = 12.dp, vertical = 6.dp).semantics {
+                contentDescription = WatchingCopy.countPillDescription(person.doneCount, person.habitCount)
+              },
             style = MaterialTheme.typography.labelLarge,
           )
         }
@@ -124,7 +129,12 @@ private fun PersonCard(
 
       Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         person.habits.forEach { habit ->
-          Row(verticalAlignment = Alignment.CenterVertically) {
+          // Read as one line: the name plus what the check time (or its em dash) means (PRD §7).
+          val description = WatchingCopy.habitStatusDescription(habit.name, habit.time, habit.checkedToday)
+          Row(
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
             Text(habit.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             Text(habit.time, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
           }

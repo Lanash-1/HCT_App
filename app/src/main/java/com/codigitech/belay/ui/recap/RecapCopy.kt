@@ -29,4 +29,21 @@ object RecapCopy {
   ): String =
     "$challengeTitle ($weekRangeLabel): $checkInsTotal of $checkInsPossible check-ins, " +
       "$perfectDays perfect day${if (perfectDays == 1) "" else "s"}. Witnessed by $witnessName."
+
+  /**
+   * PRD §7 accessibility: the per-habit week renders as seven coloured boxes, which a screen
+   * reader can say nothing about. Names the missed days instead — that's the information the
+   * boxes carry.
+   *
+   * Cells run Monday-first: a recap covers the seven days ending on the Sunday it is generated
+   * (backend/functions weeklyRecap).
+   */
+  fun habitGridDescription(name: String, score: String, cells: List<Boolean>): String {
+    val spokenScore = score.replace("/", " of ")
+    val missed = cells.indices.filter { !cells[it] }.map { WEEKDAYS.getOrElse(it) { "day ${it + 1}" } }
+    val tail = if (missed.isEmpty()) "Every day." else "Missed ${missed.joinToString(", ")}."
+    return "$name: $spokenScore days. $tail"
+  }
+
+  private val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 }

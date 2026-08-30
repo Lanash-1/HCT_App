@@ -260,7 +260,7 @@ private fun HabitRow(
         }
       }
       if (showRemove) {
-        IconButton(onClick = onRemove, modifier = Modifier.semantics { contentDescription = "Remove habit" }) {
+        IconButton(onClick = onRemove, modifier = Modifier.semantics { contentDescription = CreateChallengeCopy.REMOVE_HABIT_DESCRIPTION }) {
           Text("×", style = MaterialTheme.typography.titleLarge)
         }
       }

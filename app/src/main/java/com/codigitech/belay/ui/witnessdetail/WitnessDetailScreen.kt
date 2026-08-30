@@ -25,6 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -129,7 +131,11 @@ private fun StatusCard(uiState: WitnessDetailUiState, modifier: Modifier = Modif
       )
       Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         uiState.habits.forEach { habit ->
-          Row(verticalAlignment = Alignment.CenterVertically) {
+          val description = WitnessDetailCopy.habitStatusDescription(habit.name, habit.time, habit.checkedToday)
+          Row(
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
             Text(
               habit.name,
               modifier = Modifier.weight(1f),
