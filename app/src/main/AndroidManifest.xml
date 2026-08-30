@@ -23,6 +23,28 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+              Pairing invite links (PRD §6.11). autoVerify needs an assetlinks.json hosted on the
+              host below before Android will open these without a chooser — see
+              docs/OPEN_DECISIONS.md; until then the link still works, it just prompts.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="belay.codigitech.com"
+                      android:pathPrefix="/pair" />
+            </intent-filter>
+
+            <!-- Fallback for devices where App Links verification hasn't completed. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="belay" android:host="pair" />
+            </intent-filter>
         </activity>
 
         <service

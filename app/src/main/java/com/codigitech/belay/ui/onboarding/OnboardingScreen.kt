@@ -1,5 +1,6 @@
 package com.codigitech.belay.ui.onboarding
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,9 +37,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun OnboardingRoute(
   onContinue: (OnboardingRole) -> Unit,
   modifier: Modifier = Modifier,
+  pairingLink: String? = null,
+  onPairingLinkHandled: () -> Unit = {},
   viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+  // Keyed on the link so a second invite arriving while onboarding is open is applied too.
+  LaunchedEffect(pairingLink) {
+    if (pairingLink != null) {
+      viewModel.applyPairingLink(pairingLink)
+      onPairingLinkHandled()
+    }
+  }
 
   LaunchedEffect(uiState.didContinue) {
     if (uiState.didContinue) uiState.role?.let(onContinue)
@@ -82,7 +95,7 @@ fun OnboardingScreen(
       }
 
       when (uiState.role) {
-        OnboardingRole.Challenger -> ShareCodeSection(shareCode = uiState.shareCode)
+        OnboardingRole.Challenger -> ShareCodeSection(shareUrl = uiState.shareUrl, shareCode = uiState.shareCode)
         OnboardingRole.Witness ->
           PairCodeSection(
             codeInput = uiState.pairCodeInput,
@@ -125,18 +138,38 @@ private fun RoleCard(title: String, detail: String, selected: Boolean, onClick: 
 }
 
 @Composable
-private fun ShareCodeSection(shareCode: String?) {
-  Row(
+private fun ShareCodeSection(shareCode: String?, shareUrl: String?) {
+  val context = LocalContext.current
+
+  Column(
     modifier =
       Modifier.fillMaxWidth()
         .clip(RoundedCornerShape(16.dp))
         .background(MaterialTheme.colorScheme.surfaceVariant)
         .padding(16.dp),
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically,
+    verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Text(text = OnboardingCopy.SHARE_CODE_LABEL, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-    Text(text = shareCode ?: "····", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+      Text(text = OnboardingCopy.SHARE_CODE_LABEL, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+      Text(text = shareCode ?: "····", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    }
+
+    // The code stays primary; the link is the low-friction path (PRD §6.11).
+    if (shareUrl != null) {
+      OutlinedButton(
+        onClick = {
+          val intent =
+            Intent(Intent.ACTION_SEND).apply {
+              type = "text/plain"
+              putExtra(Intent.EXTRA_TEXT, OnboardingCopy.shareLinkMessage(shareUrl))
+            }
+          context.startActivity(Intent.createChooser(intent, OnboardingCopy.SHARE_LINK_CHOOSER_TITLE))
+        },
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        Text(OnboardingCopy.SHARE_LINK_LABEL)
+      }
+    }
   }
 }
 

@@ -6,6 +6,7 @@ import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.PairingRepository
 import com.codigitech.belay.data.repository.PairingResult
 import com.codigitech.belay.data.repository.UserRepository
+import com.codigitech.belay.domain.pairing.PairingDeepLink
 import com.codigitech.belay.domain.user.displayNameFromEmail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -23,6 +24,7 @@ enum class OnboardingRole {
 data class OnboardingUiState(
   val role: OnboardingRole? = null,
   val shareCode: String? = null,
+  val shareUrl: String? = null,
   val pairCodeInput: String = "",
   val isLoading: Boolean = false,
   val pairingSuccess: Boolean = false,
@@ -50,14 +52,25 @@ constructor(
     }
   }
 
+  /**
+   * Applies an incoming pairing link (PRD §6.11): pre-fills the code and preselects the witness
+   * role, but stops short of pairing — following a link is not the same as confirming you want to
+   * be bound to that person, and the confirm step is where the user sees who they're pairing with.
+   */
+  fun applyPairingLink(url: String?) {
+    val code = PairingDeepLink.parseCode(url) ?: return
+    _uiState.update { it.copy(role = OnboardingRole.Witness, pairCodeInput = code, pairingError = null) }
+    authRepository.currentUserId()?.let { userId -> viewModelScope.launch { userRepository.setDefaultMode(userId, "witness") } }
+  }
+
   fun pickRole(role: OnboardingRole) {
-    _uiState.update { it.copy(role = role, shareCode = null) }
+    _uiState.update { it.copy(role = role, shareCode = null, shareUrl = null) }
     val userId = authRepository.currentUserId() ?: return
     viewModelScope.launch {
       userRepository.setDefaultMode(userId, role.toMode())
       if (role == OnboardingRole.Challenger) {
         val pairing = pairingRepository.createPendingPairing(userId)
-        _uiState.update { it.copy(shareCode = pairing.pairCode) }
+        _uiState.update { it.copy(shareCode = pairing.pairCode, shareUrl = PairingDeepLink.shareUrl(pairing.pairCode)) }
       }
     }
   }

@@ -18,7 +18,7 @@ import com.codigitech.belay.ui.onboarding.OnboardingRoute
 import com.codigitech.belay.ui.witnessdetail.WitnessDetailRoute
 
 @Composable
-fun MainNavigation() {
+fun MainNavigation(pairingLink: String? = null, onPairingLinkHandled: () -> Unit = {}) {
   val backStack = rememberNavBackStack(Auth)
 
   NavDisplay(
@@ -37,6 +37,8 @@ fun MainNavigation() {
         }
         entry<Onboarding> {
           OnboardingRoute(
+            pairingLink = pairingLink,
+            onPairingLinkHandled = onPairingLinkHandled,
             onContinue = { role ->
               backStack.clear()
               backStack.add(if (role == OnboardingRole.Challenger) CreateChallenge else MainTabs)
