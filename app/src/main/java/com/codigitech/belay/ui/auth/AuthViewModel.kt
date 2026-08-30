@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.codigitech.belay.data.repository.AuthOutcome
 import com.codigitech.belay.data.repository.AuthRepository
+import com.codigitech.belay.data.repository.PushTokenRepository
 import com.codigitech.belay.domain.auth.SignupValidationError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,7 +30,7 @@ data class AuthUiState(
 @HiltViewModel
 class AuthViewModel
 @Inject
-constructor(private val authRepository: AuthRepository) : ViewModel() {
+constructor(private val pushTokenRepository: PushTokenRepository, private val authRepository: AuthRepository) : ViewModel() {
 
   private val _uiState = MutableStateFlow(AuthUiState(signedInUserId = authRepository.currentUserId()))
   val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -51,6 +52,9 @@ constructor(private val authRepository: AuthRepository) : ViewModel() {
           AuthMode.SignUp -> authRepository.signUp(email, password)
           AuthMode.LogIn -> authRepository.logIn(email, password)
         }
+      // Bind this device for push before touching UI state: FCM is how a cheer or a finished day
+      // reaches someone whose app isn't open (docs/TECH_STACK.md §4).
+      if (outcome is AuthOutcome.Success) pushTokenRepository.register(outcome.userId)
       _uiState.update { current ->
         when (outcome) {
           is AuthOutcome.Success -> current.copy(isLoading = false, signedInUserId = outcome.userId)
@@ -63,6 +67,9 @@ constructor(private val authRepository: AuthRepository) : ViewModel() {
 
   fun logOut() {
     viewModelScope.launch {
+      // Unbind first — after logOut() there is no user id left to unregister against, and a
+      // token left behind would keep delivering this account's cheers to whoever uses the device next.
+      authRepository.currentUserId()?.let { pushTokenRepository.unregister(it) }
       authRepository.logOut()
       _uiState.update { AuthUiState() }
     }

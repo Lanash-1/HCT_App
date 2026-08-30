@@ -11,6 +11,7 @@ import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.HabitRepository
+import com.codigitech.belay.data.repository.PushTokenRepository
 import com.codigitech.belay.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
@@ -85,6 +86,7 @@ constructor(
   private val habitRepository: HabitRepository,
   private val checkInRepository: CheckInRepository,
   private val clock: BelayClock,
+  private val pushTokenRepository: PushTokenRepository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ProfileUiState())
@@ -147,6 +149,9 @@ constructor(
   fun deleteAccount() {
     viewModelScope.launch {
       _uiState.update { it.copy(isDeletingAccount = true, deleteErrorMessage = null) }
+      // Before the account exists no more: the server prunes tokens off a user document, and
+      // deleteAccount removes that document outright (backend/functions deleteAccount).
+      userId?.let { pushTokenRepository.unregister(it) }
       when (val result = authRepository.deleteAccount()) {
         AccountDeletionResult.Success -> _uiState.update { it.copy(isDeletingAccount = false, didDeleteAccount = true) }
         is AccountDeletionResult.Failure -> _uiState.update { it.copy(isDeletingAccount = false, deleteErrorMessage = result.message) }

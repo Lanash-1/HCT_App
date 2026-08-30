@@ -4,6 +4,7 @@ import com.codigitech.belay.data.repository.AccountDeletionResult
 import com.codigitech.belay.data.repository.AuthOutcome
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.domain.auth.SignupValidationError
+import com.codigitech.belay.data.repository.PushTokenRepository
 import com.codigitech.belay.testutil.MainDispatcherRule
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -37,27 +38,42 @@ private class FakeAuthRepository(
   override suspend fun deleteAccount(): AccountDeletionResult = error("not used")
 }
 
+private class FakePushTokenRepository : PushTokenRepository {
+  val registered = mutableListOf<String>()
+  val unregistered = mutableListOf<String>()
+
+  override suspend fun register(userId: String) {
+    registered.add(userId)
+  }
+
+  override suspend fun unregister(userId: String) {
+    unregistered.add(userId)
+  }
+}
+
 class AuthViewModelTest {
 
   @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
+  private val pushTokenRepository = FakePushTokenRepository()
+
   @Test
   fun `starts signed out when the repository has no current user`() = runTest {
-    val viewModel = AuthViewModel(FakeAuthRepository(currentUserId = null))
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(currentUserId = null))
 
     assertNull(viewModel.uiState.value.signedInUserId)
   }
 
   @Test
   fun `starts signed in when the repository already has a current user`() = runTest {
-    val viewModel = AuthViewModel(FakeAuthRepository(currentUserId = "uid-existing"))
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(currentUserId = "uid-existing"))
 
     assertEquals("uid-existing", viewModel.uiState.value.signedInUserId)
   }
 
   @Test
   fun `editing email or password clears any prior error`() = runTest {
-    val viewModel = AuthViewModel(FakeAuthRepository(signUpResult = AuthOutcome.Failure("nope")))
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(signUpResult = AuthOutcome.Failure("nope")))
     viewModel.onEmailChange("arun@example.com")
     viewModel.onPasswordChange("password1")
     viewModel.submit(AuthMode.SignUp)
@@ -69,7 +85,7 @@ class AuthViewModelTest {
 
   @Test
   fun `successful sign up sets the signed-in user and clears loading`() = runTest {
-    val viewModel = AuthViewModel(FakeAuthRepository(signUpResult = AuthOutcome.Success("uid-42")))
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(signUpResult = AuthOutcome.Success("uid-42")))
     viewModel.onEmailChange("arun@example.com")
     viewModel.onPasswordChange("password1")
 
@@ -83,7 +99,7 @@ class AuthViewModelTest {
   @Test
   fun `validation failure surfaces a friendly message and does not sign in`() = runTest {
     val viewModel =
-      AuthViewModel(FakeAuthRepository(signUpResult = AuthOutcome.ValidationFailed(SignupValidationError.PasswordTooShort)))
+      AuthViewModel(pushTokenRepository, FakeAuthRepository(signUpResult = AuthOutcome.ValidationFailed(SignupValidationError.PasswordTooShort)))
     viewModel.onEmailChange("arun@example.com")
     viewModel.onPasswordChange("abc")
 
@@ -95,7 +111,7 @@ class AuthViewModelTest {
 
   @Test
   fun `firebase failure surfaces its message`() = runTest {
-    val viewModel = AuthViewModel(FakeAuthRepository(logInResult = AuthOutcome.Failure("The password is invalid.")))
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(logInResult = AuthOutcome.Failure("The password is invalid.")))
     viewModel.onEmailChange("arun@example.com")
     viewModel.onPasswordChange("wrongpass")
 
@@ -108,11 +124,38 @@ class AuthViewModelTest {
   @Test
   fun `logOut signs out of the repository and resets to a blank signed-out state`() = runTest {
     val authRepository = FakeAuthRepository(currentUserId = "uid-existing")
-    val viewModel = AuthViewModel(authRepository)
+    val viewModel = AuthViewModel(pushTokenRepository, authRepository)
 
     viewModel.logOut()
 
     assertTrue(authRepository.loggedOut)
     assertNull(viewModel.uiState.value.signedInUserId)
+  }
+
+  @Test
+  fun `signing in binds this device to the account, so pushes can reach it`() = runTest {
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(logInResult = AuthOutcome.Success("uid-7")))
+
+    viewModel.submit(AuthMode.LogIn)
+
+    assertEquals(listOf("uid-7"), pushTokenRepository.registered)
+  }
+
+  @Test
+  fun `a failed sign-in registers nothing`() = runTest {
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(logInResult = AuthOutcome.Failure("nope")))
+
+    viewModel.submit(AuthMode.LogIn)
+
+    assertTrue(pushTokenRepository.registered.isEmpty())
+  }
+
+  @Test
+  fun `logging out unbinds the device, so the next person to sign in here is not sent someone else's day`() = runTest {
+    val viewModel = AuthViewModel(pushTokenRepository, FakeAuthRepository(currentUserId = "uid-7"))
+
+    viewModel.logOut()
+
+    assertEquals(listOf("uid-7"), pushTokenRepository.unregistered)
   }
 }

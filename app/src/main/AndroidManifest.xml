@@ -25,6 +25,14 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".data.notification.BelayMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".data.notification.HabitReminderReceiver"
             android:exported="false" />

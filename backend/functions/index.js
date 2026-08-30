@@ -8,13 +8,18 @@
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
+const { getMessaging } = require('firebase-admin/messaging');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentWritten } = require('firebase-functions/v2/firestore');
 
 const { evaluateDayRollover } = require('./lib/evaluateDayRollover');
 const { buildWeeklyRecap } = require('./lib/buildWeeklyRecap');
 const { validateMessage } = require('./lib/validateMessage');
 const { classifyChallengeForDeletion } = require('./lib/classifyChallengeForDeletion');
+const { buildPushMessage } = require('./lib/buildPushMessage');
+const { resolvePushRecipientId, isPushAllowed, selectSendableTokens } = require('./lib/pushRouting');
+const { shouldAnnounceDayComplete } = require('./lib/shouldAnnounceDayComplete');
 
 initializeApp();
 
@@ -36,6 +41,68 @@ function lastSevenDaysEndingToday() {
     dates.push(date.toISOString().slice(0, 10));
   }
   return dates;
+}
+
+
+/**
+ * Sends one event as an FCM push (docs/TECH_STACK.md §4, §6): the tray fallback for when the
+ * recipient's app isn't open to receive it over a Firestore listener.
+ *
+ * Best-effort by design — a failed push must never fail the write that triggered it, since the
+ * recipient's listener will show the real state as soon as they open the app anyway.
+ *
+ * Tokens rejected as unregistered are pruned: a stale token from a reinstalled or wiped device
+ * would otherwise accumulate on the profile forever and be retried on every event.
+ */
+async function sendPush({ type, challenge, actorName, message }) {
+  try {
+    const recipientId = resolvePushRecipientId({ type, challenge });
+    if (!recipientId) return;
+
+    const db = getFirestore();
+    const userRef = db.collection('users').doc(recipientId);
+    // Preferences live on the profile; device tokens live in the owner-only `private/push`
+    // subdocument (see backend/firestore.rules — the profile itself is readable by any signed-in
+    // user, so tokens can't sit on it).
+    const [recipientDoc, pushDoc] = await Promise.all([userRef.get(), userRef.collection('private').doc('push').get()]);
+    const recipientProfile = recipientDoc.exists ? recipientDoc.data() : null;
+    if (!isPushAllowed({ type, recipientProfile })) return;
+
+    const tokens = selectSendableTokens(pushDoc.exists ? pushDoc.data() : null);
+    if (tokens.length === 0) return;
+
+    const payload = buildPushMessage({ type, actorName, challengeId: challenge.challenge_id, message });
+    const response = await getMessaging().sendEachForMulticast({ ...payload, tokens });
+
+    const staleTokens = response.responses
+      .map((result, index) => ({ result, token: tokens[index] }))
+      .filter(({ result }) => result.error && STALE_TOKEN_CODES.has(result.error.code))
+      .map(({ token }) => token);
+
+    if (staleTokens.length > 0) {
+      const surviving = tokens.filter((token) => !staleTokens.includes(token));
+      await pushDoc.ref.set({ fcm_tokens: surviving }, { merge: true });
+    }
+  } catch (error) {
+    console.error(`Push (${type}) failed`, error);
+  }
+}
+
+const STALE_TOKEN_CODES = new Set([
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token',
+  'messaging/invalid-argument',
+]);
+
+/** The display name to put in a push, without failing the send if the profile read does. */
+async function displayNameOf(userId) {
+  try {
+    const doc = await getFirestore().collection('users').doc(userId).get();
+    return doc.exists ? doc.data().display_name : undefined;
+  } catch (error) {
+    console.error('Display-name lookup failed', error);
+    return undefined;
+  }
 }
 
 /**
@@ -136,7 +203,43 @@ exports.weeklyRecap = onSchedule('every sunday 00:00', async () => {
       per_habit_summary: JSON.stringify(recap.perHabitSummary),
       generated_at: new Date().toISOString(),
     });
+
+    await sendPush({ type: 'recap_ready', challenge: { ...challengeDoc.data(), challenge_id: challengeDoc.id } });
   }
+});
+
+/**
+ * Live: tells the witness the moment their challenger's last habit of the day is checked
+ * (docs/TECH_STACK.md §4 step 4). Firestore listeners already cover the case where the witness
+ * has the app open — this is the tray notification for when they don't.
+ */
+exports.onCheckInWritten = onDocumentWritten('check_ins/{checkInId}', async (event) => {
+  const before = event.data.before.exists ? event.data.before.data() : null;
+  const after = event.data.after.exists ? event.data.after.data() : null;
+  if (!after) return;
+
+  const becameDone = after.done === true && before?.done !== true;
+  if (!becameDone) return;
+
+  const db = getFirestore();
+  const challengeId = after.challenge_id;
+
+  const [habitsSnap, checkInsSnap, challengeDoc] = await Promise.all([
+    db.collection('habits').where('challenge_id', '==', challengeId).get(),
+    db.collection('check_ins').where('challenge_id', '==', challengeId).where('date', '==', after.date).get(),
+    db.collection('challenges').doc(challengeId).get(),
+  ]);
+  if (!challengeDoc.exists) return;
+
+  const complete = shouldAnnounceDayComplete({
+    becameDone,
+    habitIds: habitsSnap.docs.map((doc) => doc.id),
+    doneHabitIds: checkInsSnap.docs.filter((doc) => doc.data().done === true).map((doc) => doc.data().habit_id),
+  });
+  if (!complete) return;
+
+  const challenge = { ...challengeDoc.data(), challenge_id: challengeId };
+  await sendPush({ type: 'day_complete', challenge, actorName: await displayNameOf(challenge.challenger_user_id) });
 });
 
 /**
@@ -184,6 +287,16 @@ exports.cheerNudge = onCall(async (request) => {
     message,
     created_at: new Date().toISOString(),
   });
+
+  const challengeDoc = await db.collection('challenges').doc(challengeId).get();
+  if (challengeDoc.exists) {
+    await sendPush({
+      type,
+      challenge: { ...challengeDoc.data(), challenge_id: challengeId },
+      actorName: await displayNameOf(fromUserId),
+      message,
+    });
+  }
 
   return { status: 'success', interactionId: docRef.id };
 });
@@ -240,6 +353,13 @@ exports.deleteAccount = onCall(async (request) => {
       return [...fromDocs, ...toSnap.docs];
     });
   for (const doc of pairings) {
+    batch.delete(doc.ref);
+  }
+
+  // The profile's owner-only subdocuments (device tokens) aren't removed by deleting their
+  // parent — Firestore subcollections outlive a deleted parent document.
+  const privateDocs = await db.collection('users').doc(userId).collection('private').get();
+  for (const doc of privateDocs.docs) {
     batch.delete(doc.ref);
   }
 
