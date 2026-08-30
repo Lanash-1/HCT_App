@@ -12,7 +12,8 @@
 | App activity → Other user-generated content | Yes | No | `habits.name`/`detail`, `check_ins.done` | App functionality (this is the core habit-tracking data) | Required |
 | App info and performance → Crash logs | Yes | No | Firebase Crashlytics reports | Analytics (crash diagnostics only) | Optional from the user's perspective, but not separately toggleable in v1 — see note below |
 | App info and performance → Diagnostics | Yes | No | Firebase Crashlytics device/performance data | Analytics | Same as above |
-| Device or other IDs | Yes | No | FCM push token | App functionality (delivering notifications) | Required (to receive push notifications) |
+| Device or other IDs | Yes | No | FCM push token (`users/{id}/private/push`) | App functionality (delivering notifications) | Required (to receive push notifications) |
+| App activity → App interactions | Yes | No | `users.last_seen_at` (date of last app open) | App functionality (shows a challenger whether their witness is still checking in) | Required |
 
 Every other Play category (location, financial info, health/fitness, photos/videos, contacts, web browsing history, search history, etc.) — **not collected.**
 
