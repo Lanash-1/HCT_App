@@ -102,6 +102,9 @@ private class FakeChallengeRepositoryForProfile(
 
   override fun observeChallenge(challengeId: String) = error("not used")
 
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) = Unit
+
+
   override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 

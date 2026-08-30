@@ -13,6 +13,7 @@ import com.codigitech.belay.data.repository.CheckInRepository
 import com.codigitech.belay.data.repository.CheerOrNudgeResult
 import com.codigitech.belay.data.repository.HabitRepository
 import com.codigitech.belay.data.repository.InteractionRepository
+import com.codigitech.belay.data.repository.PairingRepository
 import com.codigitech.belay.data.repository.UserRepository
 import com.codigitech.belay.testutil.MainDispatcherRule
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +57,13 @@ private class FakeChallengeRepositoryForToday(private val challenge: ChallengeEn
   override fun observeWitnessed(userId: String): Flow<List<ChallengeEntity>> = MutableStateFlow(emptyList())
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = error("not used")
+
+  val attached = mutableListOf<Pair<String, String>>()
+
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) {
+    attached.add(challengerUserId to witnessUserId)
+  }
+
 
   override suspend fun syncRemoteUpdates(challengeId: String) = Unit
 }
@@ -120,6 +128,14 @@ private class FakeInteractionRepositoryForToday(initial: List<InteractionEntity>
   override fun observeForChallenge(challengeId: String): Flow<List<InteractionEntity>> = state
 }
 
+private class FakePairingRepositoryForToday(private val pairedContactIds: List<String> = emptyList()) : PairingRepository {
+  override suspend fun createPendingPairing(fromUserId: String) = error("not used")
+
+  override suspend fun completePairing(pairCode: String, toUserId: String) = error("not used")
+
+  override suspend fun getPairedContactIds(userId: String): List<String> = pairedContactIds
+}
+
 class TodayViewModelTest {
 
   @get:Rule val mainDispatcherRule = MainDispatcherRule()
@@ -151,6 +167,7 @@ class TodayViewModelTest {
   private val witness = UserEntity("user-2", "Priya", "AB12", "witness", "system", null, true, createdAt = 0L, lastSeenAt = 5L)
 
   private fun viewModel(
+    pairingRepository: PairingRepository = FakePairingRepositoryForToday(),
     authRepository: AuthRepository = FakeAuthRepositoryForToday(),
     challengeRepository: ChallengeRepository = FakeChallengeRepositoryForToday(activeChallenge),
     habitRepository: HabitRepository = FakeHabitRepositoryForToday(habits),
@@ -165,6 +182,7 @@ class TodayViewModelTest {
     userRepository,
     interactionRepository,
     fixedClock,
+    pairingRepository,
   )
 
   @Test
@@ -382,5 +400,38 @@ class TodayViewModelTest {
 
     assertFalse(state.hasEnded)
     assertEquals(18, state.daysToGo)
+  }
+
+  @Test
+  fun `a witnessless challenge picks up a witness the challenger has since paired with`() = runTest {
+    val challengeRepository = FakeChallengeRepositoryForToday(activeChallenge.copy(witnessUserId = null))
+
+    viewModel(
+      challengeRepository = challengeRepository,
+      pairingRepository = FakePairingRepositoryForToday(pairedContactIds = listOf("user-9")),
+    )
+
+    assertEquals(listOf("user-1" to "user-9"), challengeRepository.attached)
+  }
+
+  @Test
+  fun `a challenge that already has a witness is not re-attached to a different one`() = runTest {
+    val challengeRepository = FakeChallengeRepositoryForToday(activeChallenge)
+
+    viewModel(
+      challengeRepository = challengeRepository,
+      pairingRepository = FakePairingRepositoryForToday(pairedContactIds = listOf("user-9")),
+    )
+
+    assertTrue(challengeRepository.attached.isEmpty())
+  }
+
+  @Test
+  fun `a witnessless challenge with nobody paired yet waits, rather than attaching nothing`() = runTest {
+    val challengeRepository = FakeChallengeRepositoryForToday(activeChallenge.copy(witnessUserId = null))
+
+    viewModel(challengeRepository = challengeRepository, pairingRepository = FakePairingRepositoryForToday(pairedContactIds = emptyList()))
+
+    assertTrue(challengeRepository.attached.isEmpty())
   }
 }

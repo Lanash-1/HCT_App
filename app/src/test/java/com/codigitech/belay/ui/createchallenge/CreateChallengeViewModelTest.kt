@@ -90,6 +90,9 @@ private class FakeChallengeRepository(
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = MutableStateFlow(null)
 
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) = Unit
+
+
   override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 

@@ -402,4 +402,39 @@ class ChallengeRepositoryTest {
 
     assertTrue(errorReporter.recorded.any { it is ChallengeFirestoreUnavailableException })
   }
+
+  @Test
+  fun `a challenge left without a witness picks up a newly paired one`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val challengeRemote = FakeChallengeRemoteDataSource()
+    val repository = repository(challengeDao = challengeDao, challengeRemote = challengeRemote)
+    val created =
+      (repository.createChallenge("user-1", "user-2", "September", validHabits, 30, 2) as ChallengeCreationResult.Success).challenge
+    challengeDao.update(created.copy(witnessUserId = null)) // the witness deleted their account
+
+    repository.attachWitnessIfMissing(challengerUserId = "user-1", witnessUserId = "user-3")
+
+    assertEquals("user-3", challengeDao.getActiveForChallenger("user-1").single().witnessUserId)
+    assertEquals("user-3", challengeRemote.stored[created.challengeId]?.witnessUserId)
+  }
+
+  @Test
+  fun `a challenge that already has a witness is left alone — one witness per challenge`() = runTest {
+    val challengeDao = FakeChallengeDao()
+    val repository = repository(challengeDao = challengeDao)
+    repository.createChallenge("user-1", "user-2", "September", validHabits, 30, 2)
+
+    repository.attachWitnessIfMissing(challengerUserId = "user-1", witnessUserId = "user-3")
+
+    assertEquals("user-2", challengeDao.getActiveForChallenger("user-1").single().witnessUserId)
+  }
+
+  @Test
+  fun `attaching a witness with no active challenge does nothing`() = runTest {
+    val challengeDao = FakeChallengeDao()
+
+    repository(challengeDao = challengeDao).attachWitnessIfMissing(challengerUserId = "user-1", witnessUserId = "user-3")
+
+    assertTrue(challengeDao.getActiveForChallenger("user-1").isEmpty())
+  }
 }

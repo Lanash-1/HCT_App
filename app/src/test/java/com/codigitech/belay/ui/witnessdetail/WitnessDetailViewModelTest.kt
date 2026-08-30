@@ -56,6 +56,9 @@ private class FakeChallengeRepositoryForDetail(private val challenge: ChallengeE
 
   override fun observeChallenge(challengeId: String): Flow<ChallengeEntity?> = MutableStateFlow(challenge)
 
+  override suspend fun attachWitnessIfMissing(challengerUserId: String, witnessUserId: String) = Unit
+
+
   override suspend fun syncRemoteUpdates(challengeId: String) = error("not used")
 }
 
