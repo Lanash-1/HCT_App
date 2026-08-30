@@ -1,6 +1,8 @@
 package com.codigitech.belay.data.repository
 
 import com.codigitech.belay.core.BelayClock
+import com.codigitech.belay.core.ErrorReporter
+import com.codigitech.belay.core.bestEffort
 import com.codigitech.belay.data.local.dao.UserDao
 import com.codigitech.belay.data.local.entity.UserEntity
 import com.codigitech.belay.data.remote.UserRemoteDataSource
@@ -33,12 +35,15 @@ constructor(
   private val remoteDataSource: UserRemoteDataSource,
   private val codeGenerator: PairCodeGenerator,
   private val clock: BelayClock,
+  private val errorReporter: ErrorReporter,
 ) : UserRepository {
 
   override suspend fun ensureProfile(userId: String, displayName: String): UserEntity {
     // Firestore reads/writes can fail (offline, a flaky connection right at app start) — Room is
-    // the offline-tolerant mirror, so a remote hiccup should never crash onboarding.
-    runCatching { remoteDataSource.get(userId) }.getOrNull()?.let {
+    // the offline-tolerant mirror, so a remote hiccup should never crash onboarding. It is still
+    // reported as a non-fatal (PRD §6.8): this write has no retry queue behind it, so a silent
+    // failure here means the profile never reaches Firestore at all.
+    errorReporter.bestEffort { remoteDataSource.get(userId) }.getOrNull()?.let {
       userDao.upsert(it)
       return it
     }
@@ -54,7 +59,7 @@ constructor(
         notifAllowNudge = true,
         createdAt = clock.nowEpochMillis(),
       )
-    runCatching { remoteDataSource.upsert(created) }
+    errorReporter.bestEffort { remoteDataSource.upsert(created) }
     userDao.upsert(created)
     return created
   }
@@ -68,14 +73,14 @@ constructor(
   override suspend fun setNudgeAllowed(userId: String, allowed: Boolean) = update(userId) { it.copy(notifAllowNudge = allowed) }
 
   private suspend fun update(userId: String, transform: (UserEntity) -> UserEntity) {
-    val current = runCatching { remoteDataSource.get(userId) }.getOrNull() ?: userDao.get(userId) ?: return
+    val current = errorReporter.bestEffort { remoteDataSource.get(userId) }.getOrNull() ?: userDao.get(userId) ?: return
     val updated = transform(current)
-    runCatching { remoteDataSource.upsert(updated) }
+    errorReporter.bestEffort { remoteDataSource.upsert(updated) }
     userDao.upsert(updated)
   }
 
   override suspend fun getProfile(userId: String): UserEntity? =
-    runCatching { remoteDataSource.get(userId) }.getOrNull()?.also { userDao.upsert(it) } ?: userDao.get(userId)
+    errorReporter.bestEffort { remoteDataSource.get(userId) }.getOrNull()?.also { userDao.upsert(it) } ?: userDao.get(userId)
 
   override fun observeLocalUser(userId: String): Flow<UserEntity?> = userDao.observe(userId)
 }

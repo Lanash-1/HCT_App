@@ -1,6 +1,8 @@
 package com.codigitech.belay.di
 
 import com.codigitech.belay.core.BelayClock
+import com.codigitech.belay.core.CrashlyticsErrorReporter
+import com.codigitech.belay.core.ErrorReporter
 import com.codigitech.belay.core.IdGenerator
 import com.codigitech.belay.core.LocalDataReset
 import com.codigitech.belay.core.RoomLocalDataReset
@@ -33,6 +35,7 @@ import com.codigitech.belay.data.repository.RecapRepositoryImpl
 import com.codigitech.belay.data.repository.UserRepository
 import com.codigitech.belay.data.repository.UserRepositoryImpl
 import com.codigitech.belay.domain.pairing.PairCodeGenerator
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
@@ -76,9 +79,13 @@ abstract class RepositoryModule {
 
   @Binds abstract fun bindCheckInSyncScheduler(impl: WorkManagerCheckInSyncScheduler): CheckInSyncScheduler
 
+  @Binds abstract fun bindErrorReporter(impl: CrashlyticsErrorReporter): ErrorReporter
+
   companion object {
     @Provides @Singleton fun providePairCodeGenerator(): PairCodeGenerator = PairCodeGenerator()
 
     @Provides @Singleton fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides @Singleton fun provideFirebaseCrashlytics(): FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
   }
 }
