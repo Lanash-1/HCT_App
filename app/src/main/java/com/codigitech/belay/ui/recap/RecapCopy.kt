@@ -7,6 +7,9 @@ object RecapCopy {
   const val EMPTY_DETAIL = "Your first weekly recap lands here after your first Sunday in the challenge."
   const val SHARE_LABEL = "Share card"
   const val SAVE_LABEL = "Save"
+  const val SAVED_CONFIRMATION = "Saved to your photos."
+  const val SAVE_FAILED = "Couldn't save the card."
+  const val SHARE_FAILED = "Couldn't prepare the card to share."
   const val AUTO_SEND_NOTE_SUFFIX = " automatically every Sunday."
 
   fun checkInsLine(checkInsTotal: Int, checkInsPossible: Int, perfectDays: Int): String =

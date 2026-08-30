@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.codigitech.belay.data.local.entity.ChallengeEntity
 import com.codigitech.belay.data.local.entity.RecapEntity
+import com.codigitech.belay.data.media.RecapCardImage
+import com.codigitech.belay.data.media.RecapCardStore
 import com.codigitech.belay.data.repository.AuthRepository
 import com.codigitech.belay.data.repository.ChallengeRepository
 import com.codigitech.belay.data.repository.RecapRepository
 import com.codigitech.belay.data.repository.UserRepository
+import com.codigitech.belay.domain.recap.recapCardFileName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -40,6 +44,8 @@ data class RecapUiState(
   val habitRows: List<RecapHabitRowUiState> = emptyList(),
   val witnessName: String = "",
   val shareText: String = "",
+  /** One-shot feedback for a save/share attempt, cleared once shown. */
+  val cardMessage: String? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,6 +57,7 @@ constructor(
   private val challengeRepository: ChallengeRepository,
   private val recapRepository: RecapRepository,
   private val userRepository: UserRepository,
+  private val cardStore: RecapCardStore,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(RecapUiState())
@@ -108,4 +115,28 @@ constructor(
   private companion object {
     val WEEK_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d")
   }
+
+  /** Saves the rendered card to the gallery (PRD §5.4 "share/save actions"). */
+  suspend fun saveCard(image: RecapCardImage) {
+    val saved = cardStore.saveToGallery(image, cardFileName())
+    _uiState.update { it.copy(cardMessage = if (saved != null) RecapCopy.SAVED_CONFIRMATION else RecapCopy.SAVE_FAILED) }
+  }
+
+  /**
+   * Writes the card somewhere a share target can read it, returning its URI.
+   *
+   * Null means share the text on its own rather than nothing at all — a recap the user can't send
+   * is worse than one that goes out without its picture.
+   */
+  suspend fun shareCard(image: RecapCardImage): String? {
+    val uri = cardStore.cacheForSharing(image, cardFileName())
+    if (uri == null) _uiState.update { it.copy(cardMessage = RecapCopy.SHARE_FAILED) }
+    return uri
+  }
+
+  fun onCardMessageShown() {
+    _uiState.update { it.copy(cardMessage = null) }
+  }
+
+  private fun cardFileName(): String = _uiState.value.let { recapCardFileName(it.challengeTitle, it.weekRangeLabel) }
 }

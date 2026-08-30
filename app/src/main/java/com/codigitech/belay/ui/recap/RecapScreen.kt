@@ -1,6 +1,8 @@
 package com.codigitech.belay.ui.recap
 
 import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,26 +20,52 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
 @Composable
 fun RecapRoute(modifier: Modifier = Modifier, viewModel: RecapViewModel = hiltViewModel()) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-  RecapScreen(uiState = uiState, modifier = modifier)
+  RecapScreen(
+    uiState = uiState,
+    // asAndroidBitmap() is a view onto the already-captured layer, so this stays cheap and the
+    // rasterisation itself happens inside the store, off the main thread.
+    onSaveCard = { image -> viewModel.saveCard { image.asAndroidBitmap() } },
+    onShareCard = { image -> viewModel.shareCard { image.asAndroidBitmap() } },
+    onMessageShown = viewModel::onCardMessageShown,
+    modifier = modifier,
+  )
 }
 
 @Composable
-fun RecapScreen(uiState: RecapUiState, modifier: Modifier = Modifier) {
+fun RecapScreen(
+  uiState: RecapUiState,
+  onSaveCard: suspend (ImageBitmap) -> Unit = {},
+  onShareCard: suspend (ImageBitmap) -> String? = { null },
+  onMessageShown: () -> Unit = {},
+  modifier: Modifier = Modifier,
+) {
   if (uiState.isLoading) return
   val context = LocalContext.current
+  val scope = rememberCoroutineScope()
+  // The card is drawn into this layer as well as to the screen, so "Save" and "Share" hand over
+  // exactly the card the user is looking at rather than a second, re-laid-out copy of it.
+  val cardLayer = rememberGraphicsLayer()
 
   Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
     Text(RecapCopy.TITLE, style = MaterialTheme.typography.headlineSmall)
@@ -45,22 +73,53 @@ fun RecapScreen(uiState: RecapUiState, modifier: Modifier = Modifier) {
     if (!uiState.hasRecap) {
       EmptyState()
     } else {
-      RecapCard(uiState)
+      RecapCard(
+        uiState,
+        modifier =
+          Modifier.drawWithContent {
+            cardLayer.record { this@drawWithContent.drawContent() }
+            drawLayer(cardLayer)
+          },
+      )
 
       Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Button(
           onClick = {
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-              type = "text/plain"
-              putExtra(Intent.EXTRA_TEXT, uiState.shareText)
+            scope.launch {
+              val imageUri = onShareCard(cardLayer.toImageBitmap())?.let(Uri::parse)
+              val shareIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                  putExtra(Intent.EXTRA_TEXT, uiState.shareText)
+                  if (imageUri == null) {
+                    type = "text/plain"
+                  } else {
+                    // The card itself is the point of the recap (PRD §5.4) — the text is a caption
+                    // for it, and the fallback when the image couldn't be written.
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, imageUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                  }
+                }
+              context.startActivity(Intent.createChooser(shareIntent, RecapCopy.SHARE_LABEL))
             }
-            context.startActivity(Intent.createChooser(shareIntent, RecapCopy.SHARE_LABEL))
           },
           modifier = Modifier.weight(1f),
         ) {
           Text(RecapCopy.SHARE_LABEL)
         }
-        OutlinedButton(onClick = {}, modifier = Modifier.weight(1f)) { Text(RecapCopy.SAVE_LABEL) }
+        OutlinedButton(
+          onClick = { scope.launch { onSaveCard(cardLayer.toImageBitmap()) } },
+          modifier = Modifier.weight(1f),
+        ) {
+          Text(RecapCopy.SAVE_LABEL)
+        }
+      }
+
+      uiState.cardMessage?.let { message ->
+        LaunchedEffect(message) {
+          Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+          onMessageShown()
+        }
       }
 
       Text(
