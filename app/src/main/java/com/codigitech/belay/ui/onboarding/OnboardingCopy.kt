@@ -15,5 +15,9 @@ object OnboardingCopy {
   const val PAIRED_MESSAGE = "You're paired."
   const val PAIR_CODE_INVALID = "That code isn't valid, or it's already been used."
   const val PAIR_CODE_NETWORK_ERROR = "Couldn't reach the server — check your connection and try again."
+  const val SHARE_LINK_LABEL = "Send an invite link"
+  const val SHARE_LINK_CHOOSER_TITLE = "Invite your witness"
   const val CONTINUE = "Continue"
+
+  fun shareLinkMessage(url: String): String = "Be my witness on Belay — you'll see every habit I check off, and every one I don't: $url"
 }

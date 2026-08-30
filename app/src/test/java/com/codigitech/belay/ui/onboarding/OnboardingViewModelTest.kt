@@ -155,4 +155,46 @@ class OnboardingViewModelTest {
     viewModel.continueOnboarding()
     assertTrue(viewModel.uiState.value.didContinue)
   }
+
+  @Test
+  fun `opening a pairing link lands on the witness role with the code filled in, ready to confirm`() = runTest {
+    val vm = viewModel()
+
+    vm.applyPairingLink("https://belay.codigitech.com/pair/7K42")
+
+    val state = vm.uiState.value
+    assertEquals("7K42", state.pairCodeInput)
+    // Whoever follows a challenger's invite is the witness — making them pick the role again
+    // after tapping a link that already said so is friction the link exists to remove.
+    assertEquals(OnboardingRole.Witness, state.role)
+  }
+
+  @Test
+  fun `a pairing link does not pair on its own — the user still confirms`() = runTest {
+    val pairingRepository = FakePairingRepository()
+    val vm = viewModel(pairingRepository = pairingRepository)
+
+    vm.applyPairingLink("https://belay.codigitech.com/pair/7K42")
+
+    assertFalse(vm.uiState.value.pairingSuccess)
+  }
+
+  @Test
+  fun `a link that carries no valid pairing code leaves onboarding untouched`() = runTest {
+    val vm = viewModel()
+
+    vm.applyPairingLink("https://not-belay.example.com/pair/7K42")
+
+    assertEquals("", vm.uiState.value.pairCodeInput)
+    assertNull(vm.uiState.value.role)
+  }
+
+  @Test
+  fun `a challenger gets a shareable invite link alongside the code`() = runTest {
+    val vm = viewModel()
+
+    vm.pickRole(OnboardingRole.Challenger)
+
+    assertEquals("https://belay.codigitech.com/pair/${vm.uiState.value.shareCode}", vm.uiState.value.shareUrl)
+  }
 }
