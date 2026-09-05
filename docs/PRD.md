@@ -96,8 +96,8 @@ Since this starts as a personal/friends project going public on Play Store rathe
 Everything needed to start development is decided. These remain open but are deliberately deferred to when they're actually needed (per your direction — decide at time of use, not speculatively):
 
 - Package ID confirmed as `com.codigitech.belay` ([TECH_STACK.md §9](TECH_STACK.md#9-naming--identifiers)); Play Console app entry itself not yet created — do that when ready to publish.
-- Domain for Android App Links verification, needed for deep-link pairing ([TECH_STACK.md §11](TECH_STACK.md#11-pairing)).
-- Whether cheer/nudge gets optional quick-pick message shortcuts alongside free text, or free text only ([TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages)).
+- ~~Domain for Android App Links verification~~ — confirmed as `belay.codigitech.com` ([TECH_STACK.md §11](TECH_STACK.md#11-pairing)); hosting `assetlinks.json` there is still an open task, tracked in [OPEN_DECISIONS.md](OPEN_DECISIONS.md#1-app-links-domain-for-pairing-invites--blocks-release-for-the-link-path--domain-confirmed-hosting-still-open).
+- ~~Whether cheer/nudge gets optional quick-pick message shortcuts~~ — decided: free text only ([TECH_STACK.md §12](TECH_STACK.md#12-cheer--nudge-messages)).
 - Prod Firebase project creation — dev project exists; prod is created before first release build ([TECH_STACK.md §Environments](TECH_STACK.md#environments)).
 - Real logo/icon assets — using a text-monogram placeholder for now ([TECH_STACK.md §9a](TECH_STACK.md#9a-app-icon)).
 - [PRIVACY_POLICY.md](PRIVACY_POLICY.md) is drafted but needs the bracketed placeholders filled in, a legal review, and hosting before Play Store submission.

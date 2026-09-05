@@ -137,22 +137,20 @@ Notes:
 ## 11. Pairing
 
 **Code + deep link, both in v1.** The 4-character pairing code (e.g. `7K42`) from the design remains the primary UI. Additionally, a shareable deep link (Android App Links) lets a challenger send a direct link that opens Belay straight to the "enter/confirm pairing" state pre-filled with their code — reduces friction versus typing the code manually. Requires:
-- An `assetlinks.json` hosted at the package's associated domain (`codigitech.com` or subdomain, once confirmed) for App Links verification.
-- A pairing deep-link route (e.g. `https://belay.codigitech.com/pair/{code}` or a custom scheme fallback) handled by Compose Navigation's deep-link support.
+- An `assetlinks.json` hosted at the package's associated domain (**confirmed: `belay.codigitech.com`**) for App Links verification. Still needs to actually be hosted with the release cert's SHA-256 before submission — see [docs/OPEN_DECISIONS.md](OPEN_DECISIONS.md#1-app-links-domain-for-pairing-invites--blocks-release-for-the-link-path).
+- A pairing deep-link route (`https://belay.codigitech.com/pair/{code}`, with a `belay://pair/{code}` custom-scheme fallback) handled by Compose Navigation's deep-link support.
 
 ## 12. Cheer / nudge messages
 
 **User-typed, not preset copy.** The design's Warm/Competitive/Dry tone variants are dropped — instead, when a witness cheers or nudges, they type their own short message (with a sensible character limit, e.g. 140 chars). This replaces `challenges.tone` and the tone-keyed copy table referenced in the design's prototype logic. See [DATA_MODEL.md](DATA_MODEL.md) for the resulting `interactions.message` field, which is now witness-authored input rather than server-resolved copy.
 
-A default placeholder/prompt (e.g. "Say something...") is shown in the compose field; consider a minimal quick-pick of a couple of short defaults ("Nice!", "Don't forget!") as optional shortcuts, not as a tone system — confirm with product owner if that's wanted or if free text only is preferred.
+A default placeholder/prompt (e.g. "Say something...") is shown in the compose field. **Confirmed: free text only, no quick-pick shortcuts** — keeps the tone-preset system the PRD dropped (§6.10) from coming back in another form.
 
 ## Open questions
 
 - **`firebase login` + Blaze plan needed before real Cloud Functions deployment.** Functions are written and tested against the Firebase Local Emulator Suite, but deploying them for real needs an authenticated `firebase-tools` session (interactive browser OAuth) and the `belay-883c4` project to be on the Blaze (pay-as-you-go) plan — Cloud Functions don't deploy on the free Spark plan.
 - Create the prod Firebase project before first release build.
 - Confirm final Play Console developer account name once the app entry is created there.
-- Confirm the domain to use for App Links verification (§11) — needed before deep-link pairing can ship.
-- Decide whether cheer/nudge gets optional quick-pick shortcuts alongside free text (§12), or free text only.
 - Real logo/icon assets (§9a) — swap in whenever ready; not a blocker.
 
 Everything else in this doc is settled. Remaining decisions (store listing content, launch date, etc.) are deliberately deferred to when they're actually needed, not resolved speculatively — see [PRD.md](PRD.md) and [ROADMAP.md](ROADMAP.md).

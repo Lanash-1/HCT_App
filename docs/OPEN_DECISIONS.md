@@ -6,25 +6,24 @@ nothing is blocked — but each needs your action before public release.
 
 Status legend: **BLOCKS RELEASE** / **works, needs confirming** / **nice to have**
 
-## 1. App Links domain for pairing invites — **BLOCKS RELEASE (for the link path)**
+## 1. App Links domain for pairing invites — **BLOCKS RELEASE (for the link path) — domain confirmed, hosting still open**
 
-`PairingDeepLink.kt` and `AndroidManifest.xml` currently hardcode
-`https://belay.codigitech.com/pair/{code}`. TECH_STACK.md §11 lists the domain as unconfirmed.
+`PairingDeepLink.kt` and `AndroidManifest.xml` hardcode `https://belay.codigitech.com/pair/{code}`.
+**Decided (2026-09-05): keep this domain.**
 
-**What I did:** built the whole link path against that provisional host, plus a
-`belay://pair/{code}` custom-scheme fallback so invites still work on devices where App Links
-verification hasn't completed.
+**What I did:** built the whole link path against that host, plus a `belay://pair/{code}`
+custom-scheme fallback so invites still work on devices where App Links verification hasn't
+completed.
 
-**What I need from you:**
-- Confirm the domain (or name a different one).
-- Host `.well-known/assetlinks.json` on it — template and steps in
+**Still needed from you (this is the part I genuinely can't do):**
+- Host `.well-known/assetlinks.json` on `belay.codigitech.com` — template and steps in
   [docs/well-known/README.md](well-known/README.md). This needs the **release** signing
-  certificate's SHA-256, which I can't generate.
+  certificate's SHA-256, which only you can generate (it comes from your release keystore).
 
-Changing the domain later is a two-line edit (the constant in `PairingDeepLink.kt` and the
-`android:host` in the manifest), but any invite link already sent out stops working.
+If the domain ever needs to change, it's a two-line edit (the constant in `PairingDeepLink.kt` and
+the `android:host` in the manifest), but any invite link already sent out stops working.
 
-## 2. Profile documents are readable by any signed-in user — **works, worth hardening**
+## 2. Profile documents are readable by any signed-in user — **decided: leave as-is for v1**
 
 `backend/firestore.rules` allows `read` on `/users/{userId}` for anyone signed in. That's there so
 a witness can resolve a challenger's display name (and vice versa) without a server round-trip.
@@ -37,21 +36,19 @@ The privacy policy is worded to match this rather than overclaiming.
 Habit data, check-ins, misses and cheer/nudge messages are *not* affected: those are already scoped
 to challenge membership, and device push tokens live in an owner-only subdocument.
 
-**What I'd suggest:** before launch, narrow it to "self, or a user you share a challenge with".
-Firestore rules can't run queries, so this needs the paired user ids denormalised onto the profile
-(e.g. a `visible_to` array maintained by the pairing Cloud Function) — a real change, not a rules
-tweak, which is why I haven't made the call unilaterally.
+**Decided (2026-09-05):** leave as-is for v1, revisit before public launch rather than doing it now.
+If it's picked back up, the fix is narrowing the rule to "self, or a user you share a challenge
+with" — Firestore rules can't run queries, so that needs the paired user ids denormalised onto the
+profile (e.g. a `visible_to` array maintained by the pairing Cloud Function), which is a real
+backend change, not a rules tweak.
 
-## 3. Cheer/nudge quick-pick shortcuts, or free text only? — **works, needs deciding**
+## 3. Cheer/nudge quick-pick shortcuts, or free text only? — **decided: free text only**
 
 TECH_STACK.md §12 left this open: a witness types their own short message (≤140 chars). The
 question was whether to also offer a couple of one-tap defaults ("Nice!", "Don't forget!").
 
-**What I did:** free text only, as specified. Nothing is blocked.
-
-**What I need from you:** a yes/no. Adding quick-picks later is a small UI change to
-`CheerNudgeDialog.kt` — they'd fill the text field rather than send canned copy, so the tone-preset
-system the PRD explicitly dropped (§6.10) doesn't come back.
+**Decided (2026-09-05): free text only**, as originally implemented. No code change needed —
+the tone-preset system the PRD explicitly dropped (§6.10) stays dropped.
 
 ## 4. Firebase projects, Blaze plan, and Cloud Functions deployment — **BLOCKS RELEASE**
 
